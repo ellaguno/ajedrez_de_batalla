@@ -56,6 +56,18 @@ export function saveCinematics(enabled: boolean): void {
   localStorage.setItem(CINE_KEY, enabled ? 'on' : 'off');
 }
 
+const ONLINE_KEY = 'adb.online';
+
+/** Código de la partida en línea activa (para reconectar tras recargar). */
+export function loadOnlineCode(): string | null {
+  return localStorage.getItem(ONLINE_KEY);
+}
+
+export function saveOnlineCode(code: string | null): void {
+  if (code) localStorage.setItem(ONLINE_KEY, code);
+  else localStorage.removeItem(ONLINE_KEY);
+}
+
 export type Theme = 'dark' | 'light';
 
 export function loadTheme(): Theme {

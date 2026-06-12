@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 
-const apiProxy = { '/api': 'http://localhost:3001' };
+const apiProxy = { '/api': { target: 'http://localhost:3001', ws: true } };
 
 export default defineConfig({
   build: {

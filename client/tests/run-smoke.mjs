@@ -42,6 +42,7 @@ const TESTS = [
   'smoke-capture.mjs',
   'smoke-account.mjs',
   'smoke-llm.mjs',
+  'smoke-online.mjs',
 ];
 
 let failed = false;

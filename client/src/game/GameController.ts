@@ -22,6 +22,11 @@ export class GameController {
   config: GameConfig = { white: { kind: 'human' }, black: { kind: 'human' } };
   /** Hay un motor calculando o una animación en curso. */
   busy = false;
+  /**
+   * En partidas en línea: las jugadas humanas se envían aquí en lugar de
+   * aplicarse; el servidor (árbitro) las confirma vía applyServerMove().
+   */
+  onlineSender: ((from: Square, to: Square, promotion?: string) => void) | null = null;
 
   private engines = new Map<Color, EnginePlayer>();
   /** Invalida bucles de motor pendientes al reiniciar/deshacer. */
@@ -93,14 +98,23 @@ export class GameController {
       (m) => m.to === to && (!m.promotion || m.promotion === (promotion ?? 'q')),
     );
     if (!legal) return false;
+    if (this.onlineSender) {
+      this.onlineSender(from, to, promotion);
+      return true;
+    }
     await this.applyMove(from, to, promotion);
     void this.engineLoop(this.generation);
     return true;
   }
 
+  /** Jugada confirmada por el árbitro (partidas en línea). */
+  async applyServerMove(from: Square, to: Square, promotion?: string): Promise<void> {
+    await this.applyMove(from, to, promotion);
+  }
+
   /** Deshacer (solo si juega al menos un humano). Retrocede hasta dejar al humano al turno. */
   undo(): void {
-    if (this.busy) return;
+    if (this.busy || this.onlineSender) return;
     if (this.config.white.kind !== 'human' && this.config.black.kind !== 'human') return;
     if (this.chess.history().length === 0) return;
 
@@ -152,7 +166,8 @@ export class GameController {
     while (gen === this.generation && !this.chess.isGameOver()) {
       const color = this.turn;
       const player = this.playerFor(color);
-      if (player.kind === 'human') return;
+      // Solo motor y LLM mueven solos; humano y rival remoto esperan.
+      if (player.kind !== 'engine' && player.kind !== 'llm') return;
 
       this.busy = true;
       try {

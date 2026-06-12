@@ -343,6 +343,57 @@ dialog h2 {
   padding: 5px 9px;
 }
 
+.online-section {
+  margin-bottom: 16px;
+}
+
+.online-section h3 {
+  font-size: 14px;
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
+.online-section input {
+  font: inherit;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  text-transform: uppercase;
+}
+
+#online-code {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-align: center;
+  padding: 8px;
+  margin: 6px 0;
+  border: 1px dashed var(--accent);
+  border-radius: 10px;
+  color: var(--accent);
+}
+
+#online-code-box {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+#online-code-box .muted,
+.muted {
+  color: var(--muted);
+}
+
+#online-msg {
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e5533d66;
+  color: #e5533d;
+  margin-bottom: 8px;
+}
+
 #replay-bar {
   position: absolute;
   bottom: 24px;

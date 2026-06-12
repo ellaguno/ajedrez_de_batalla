@@ -80,8 +80,12 @@ de entorno).
   iniciada, la partida se guarda sola en el servidor; el diálogo "Mis partidas"
   permite continuarla, repetirla jugada a jugada (modo repetición ⏮◀▶⏭, con
   cinemáticas) o borrarla.
-- [ ] **Hito 5 — Juego en línea**: persona contra persona vía WebSockets, el servidor
-  como árbitro (valida jugadas con la misma lógica chess.js).
+- [x] **Hito 5 — Juego en línea**: persona contra persona vía WebSockets con el
+  servidor como árbitro: mantiene el estado autoritativo, valida cada jugada con
+  chess.js y la difunde; los clientes solo aplican jugadas confirmadas. Partidas
+  por código de invitación (botón "Jugar en línea", requiere sesión), elección de
+  color, rendición, aviso de rival conectado/desconectado y reconexión automática
+  tras recargar (las partidas sobreviven incluso a reinicios del servidor).
 - [x] **Hito 6 — IAs LLM**: jugadores LLM en el diálogo de nueva partida, en
   cualquier combinación (humano/Stockfish/LLM contra humano/Stockfish/LLM).
   Proveedores directos: **Claude** (SDK Anthropic), **OpenAI** y **DeepSeek**;

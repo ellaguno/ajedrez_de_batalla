@@ -14,6 +14,7 @@
         <h1>♞ Ajedrez de Batalla</h1>
         <div id="status" aria-live="polite">—</div>
         <div class="spacer"></div>
+        <button id="btn-online" hidden>Jugar en línea</button>
         <button id="btn-games" hidden>Mis partidas</button>
         <button id="btn-user">Entrar</button>
         <button id="btn-theme" title="Tema claro/oscuro">🌓</button>
@@ -24,6 +25,7 @@
           <button id="btn-new" class="primary">Nueva partida</button>
           <button id="btn-undo">Deshacer</button>
           <button id="btn-flip">Girar vista</button>
+          <button id="btn-resign" hidden>Rendirse</button>
         </div>
         <label class="set-row">
           Set de piezas
@@ -103,6 +105,39 @@
             <button type="submit" class="primary" id="auth-submit">Entrar</button>
           </div>
         </form>
+      </dialog>
+
+      <dialog id="dlg-online">
+        <h2>Jugar en línea</h2>
+        <div class="online-section">
+          <h3>Crear partida</h3>
+          <div class="cfg-row">
+            <label>Juegas con</label>
+            <select id="online-color">
+              <option value="random" selected>Color aleatorio</option>
+              <option value="w">Blancas</option>
+              <option value="b">Negras</option>
+            </select>
+            <button id="online-create" class="primary">Crear</button>
+          </div>
+          <div id="online-code-box" hidden>
+            Comparte este código con tu rival:
+            <div id="online-code">—</div>
+            <div class="muted">Esperando a que se una…</div>
+          </div>
+        </div>
+        <div class="online-section">
+          <h3>Unirse a una partida</h3>
+          <div class="cfg-row">
+            <label>Código</label>
+            <input id="online-join-code" maxlength="5" placeholder="ABC12" autocomplete="off" />
+            <button id="online-join" class="primary">Unirse</button>
+          </div>
+        </div>
+        <div id="online-msg" hidden></div>
+        <div class="dlg-buttons">
+          <button id="online-close">Cerrar</button>
+        </div>
       </dialog>
 
       <dialog id="dlg-profile">

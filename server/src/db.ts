@@ -61,6 +61,18 @@ CREATE TABLE IF NOT EXISTS llm_models (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS matches (
+  id INTEGER PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  white_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  black_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  pgn TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'open',
+  result TEXT NOT NULL DEFAULT '*',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_games_user ON games(user_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 `);

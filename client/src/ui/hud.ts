@@ -96,8 +96,9 @@ export class Hud {
 
   setPlayers(config: GameConfig): void {
     const desc = (p: PlayerConfig) => {
-      if (p.kind === 'human') return 'Humano';
+      if (p.kind === 'human') return p.label ?? 'Humano';
       if (p.kind === 'llm') return p.label ?? 'IA (LLM)';
+      if (p.kind === 'remote') return p.label ?? 'Rival en línea';
       return `Stockfish nivel ${p.skill ?? 5}`;
     };
     this.players.textContent = `Blancas: ${desc(config.white)}\nNegras: ${desc(config.black)}`;

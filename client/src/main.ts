@@ -10,6 +10,7 @@ import { AuthUI } from './ui/auth';
 import { GamesUI } from './ui/games';
 import * as storage from './storage';
 import * as api from './api';
+import { OnlineClient, onlineErrorText, type StartInfo } from './online';
 import { listSets, loadSet } from './sets/SetLoader';
 import type { PieceSetInfo } from './sets/types';
 import type { AppliedMove, GameConfig, GameOverInfo, PlayerConfig } from './types';
@@ -78,6 +79,7 @@ function statusText(): string {
   const color = controller.turn === 'w' ? 'blancas' : 'negras';
   const player = controller.playerFor(controller.turn);
   const check = controller.chess.isCheck() ? ' — ¡jaque!' : '';
+  if (player.kind === 'remote') return `Turno: ${color} — esperando a ${playerDesc(player)}${check}`;
   return player.kind !== 'human'
     ? `Turno: ${color} (${playerDesc(player)} pensando…)${check}`
     : `Turno: ${color}${check}`;
@@ -101,8 +103,9 @@ function gameOverText(info: GameOverInfo): string {
 }
 
 function playerDesc(p: PlayerConfig): string {
-  if (p.kind === 'human') return 'Humano';
+  if (p.kind === 'human') return p.label ?? 'Humano';
   if (p.kind === 'llm') return p.label ?? 'IA LLM';
+  if (p.kind === 'remote') return p.label ?? 'Rival en línea';
   return `Stockfish ${p.skill ?? 5}`;
 }
 
@@ -219,6 +222,7 @@ const hud = new Hud({
     const config = await hud.askNewGame();
     if (!config) return;
     exitReplay();
+    endOnline();
     hud.hideBanner();
     storage.clearGame();
     serverGameId = null;
@@ -231,6 +235,7 @@ const hud = new Hud({
     controller.undo();
   },
   onFlip() {
+    viewIsWhite = !viewIsWhite;
     void scene.flipView();
   },
   onToggleTheme() {
@@ -344,6 +349,128 @@ document.getElementById('rp-start')!.addEventListener('click', replayStart);
 document.getElementById('rp-end')!.addEventListener('click', replayEnd);
 document.getElementById('rp-exit')!.addEventListener('click', exitReplay);
 
+// ------------------------------------------------------------------- online
+let online: { code: string; myColor: 'w' | 'b' } | null = null;
+let viewIsWhite = true;
+/** Serializa las jugadas del servidor para no solapar animaciones. */
+let serverMoveChain = Promise.resolve();
+
+const $id = (id: string) => document.getElementById(id)!;
+const dlgOnline = $id('dlg-online') as HTMLDialogElement;
+const onlineMsg = $id('online-msg') as HTMLDivElement;
+
+function onlineError(text: string): void {
+  if (dlgOnline.open) {
+    onlineMsg.textContent = text;
+    onlineMsg.hidden = false;
+  } else {
+    hud.showBanner(text);
+  }
+}
+
+function endOnline(): void {
+  online = null;
+  controller.onlineSender = null;
+  storage.saveOnlineCode(null);
+  ($id('btn-resign') as HTMLButtonElement).hidden = true;
+}
+
+const onlineClient = new OnlineClient({
+  onStart(info: StartInfo) {
+    exitReplay();
+    hud.hideBanner();
+    online = { code: info.code, myColor: info.color };
+    storage.saveOnlineCode(info.code);
+    serverGameId = null;
+    serverMoveChain = Promise.resolve();
+
+    const seat = (c: 'w' | 'b'): PlayerConfig => ({
+      kind: c === info.color ? 'human' : 'remote',
+      label: c === 'w' ? info.white : info.black,
+    });
+    const config: GameConfig = { white: seat('w'), black: seat('b') };
+    currentGameName = `${info.white} vs ${info.black} — en línea`;
+    controller.onlineSender = (f, t, p) => onlineClient.sendMove(f, t, p);
+
+    void controller.newGame(config, info.pgn || undefined).then(() => {
+      if (info.status === 'finished') {
+        endOnline();
+      } else {
+        ($id('btn-resign') as HTMLButtonElement).hidden = false;
+      }
+      // El tablero se mira desde el bando propio.
+      if ((info.color === 'b') === viewIsWhite) {
+        viewIsWhite = !viewIsWhite;
+        void scene.flipView();
+      }
+    });
+    if (dlgOnline.open) dlgOnline.close();
+  },
+  onMove(mv) {
+    serverMoveChain = serverMoveChain.then(() =>
+      controller.applyServerMove(mv.from as Square, mv.to as Square, mv.promotion),
+    );
+  },
+  onGameOver(info) {
+    serverMoveChain = serverMoveChain.then(() => {
+      if (info.reason === 'resign') {
+        controller.halt();
+        hud.showBanner(
+          info.by === 'w'
+            ? 'Las blancas se rinden — ganan las negras'
+            : 'Las negras se rinden — ganan las blancas',
+        );
+        hud.setStatus('Partida terminada');
+      }
+      endOnline();
+    });
+  },
+  onOpponentStatus(connected) {
+    hud.setStatus(connected ? statusText() : 'Tu rival se ha desconectado…');
+  },
+  onError(code) {
+    if (code === 'partida-no-existe') storage.saveOnlineCode(null);
+    onlineError(onlineErrorText(code));
+  },
+  onClosed() {
+    if (online) hud.setStatus('Conexión perdida — recarga la página para reconectar');
+  },
+});
+
+$id('btn-online').addEventListener('click', () => {
+  onlineMsg.hidden = true;
+  $id('online-code-box').hidden = true;
+  dlgOnline.showModal();
+});
+$id('online-close').addEventListener('click', () => dlgOnline.close());
+$id('online-create').addEventListener('click', () => {
+  void (async () => {
+    try {
+      const color = ($id('online-color') as HTMLSelectElement).value as 'w' | 'b' | 'random';
+      const created = await onlineClient.create(color);
+      $id('online-code').textContent = created.code;
+      $id('online-code-box').hidden = false;
+      onlineMsg.hidden = true;
+    } catch {
+      onlineError('No se pudo conectar con el servidor.');
+    }
+  })();
+});
+$id('online-join').addEventListener('click', () => {
+  void (async () => {
+    const code = ($id('online-join-code') as HTMLInputElement).value.trim().toUpperCase();
+    if (code.length < 4) return onlineError('Escribe el código de la partida.');
+    try {
+      await onlineClient.join(code);
+    } catch {
+      onlineError('No se pudo conectar con el servidor.');
+    }
+  })();
+});
+$id('btn-resign').addEventListener('click', () => {
+  if (online && window.confirm('¿Seguro que quieres rendirte?')) onlineClient.resign();
+});
+
 // ----------------------------------------------------------- cuenta/partidas
 const authUi = new AuthUI((user) => {
   currentUser = user;
@@ -426,11 +553,22 @@ async function start(): Promise<void> {
     white: { kind: 'human' },
     black: { kind: 'engine', skill: 5 },
   };
-  const config = saved?.config ?? defaultConfig;
-  serverGameId = saved?.serverGameId ?? null;
-  currentGameName = saved?.name ?? makeGameName(config);
-  await controller.newGame(config, saved?.pgn || undefined);
+  // Una partida online guardada no se reanuda en local: se reconecta abajo.
+  const wasOnline =
+    saved && (saved.config.white.kind === 'remote' || saved.config.black.kind === 'remote');
+  const config = !saved || wasOnline ? defaultConfig : saved.config;
+  serverGameId = wasOnline ? null : (saved?.serverGameId ?? null);
+  currentGameName = (!wasOnline && saved?.name) || makeGameName(config);
+  await controller.newGame(config, wasOnline ? undefined : saved?.pgn || undefined);
   appReady = true;
+
+  // Reconexión a la partida en línea activa, si la hay.
+  const onlineCode = storage.loadOnlineCode();
+  if (currentUser && onlineCode) {
+    onlineClient.join(onlineCode).catch(() => storage.saveOnlineCode(null));
+  } else if (onlineCode && !currentUser) {
+    storage.saveOnlineCode(null);
+  }
 }
 void start();
 

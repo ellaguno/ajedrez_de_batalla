@@ -1,6 +1,6 @@
 import type { Move } from 'chess.js';
 
-export type PlayerKind = 'human' | 'engine' | 'llm';
+export type PlayerKind = 'human' | 'engine' | 'llm' | 'remote';
 
 export interface PlayerConfig {
   kind: PlayerKind;

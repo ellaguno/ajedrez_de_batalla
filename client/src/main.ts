@@ -570,7 +570,12 @@ async function start(): Promise<void> {
   hud.populateSets(availableSets, activeSetId);
   await applySetById(activeSetId);
 
-  const backdrop = storage.loadBackdrop();
+  let backdrop = storage.loadBackdrop();
+  if (backdrop.startsWith('/hdri/')) {
+    // Migración: los cielos integrados ya no son archivos .hdr.
+    backdrop = backdrop.includes('noche') ? 'cielo:noche' : 'cielo:atardecer';
+    storage.saveBackdrop(backdrop);
+  }
   hud.populateBackdrops(await api.listHdris(), backdrop);
   if (backdrop !== 'sala') {
     scene.setBackdrop(backdrop).catch(() => {

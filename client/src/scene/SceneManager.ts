@@ -7,6 +7,7 @@ import type { AppliedMove } from '../types';
 import type { PieceSet } from '../sets/types';
 import { Board3D, squareToWorld, type HighlightKind } from './board';
 import { Environment } from './environment';
+import { makeSky, type SkyKind } from './skies';
 import { Pieces3D } from './pieces';
 import { Tweens } from './tweens';
 
@@ -119,8 +120,10 @@ export class SceneManager {
   }
 
   /**
-   * Cambia el fondo: 'sala' restaura el entorno 3D; una URL .hdr carga un
-   * panorama equirectangular que además ilumina la escena (PMREM).
+   * Cambia el fondo: 'sala' restaura el entorno 3D; 'cielo:*' genera un
+   * panorama procedural de alta resolución en el cliente; una URL .hdr
+   * carga un panorama equirectangular. En ambos casos el panorama también
+   * ilumina la escena (PMREM).
    */
   async setBackdrop(value: string): Promise<void> {
     if (value === 'sala') {
@@ -132,7 +135,9 @@ export class SceneManager {
     }
     let entry = this.hdrCache.get(value);
     if (!entry) {
-      const texture = await new RGBELoader().loadAsync(value);
+      const texture = value.startsWith('cielo:')
+        ? makeSky(value.slice(6) as SkyKind)
+        : await new RGBELoader().loadAsync(value);
       texture.mapping = THREE.EquirectangularReflectionMapping;
       const pmrem = new THREE.PMREMGenerator(this.renderer);
       const env = pmrem.fromEquirectangular(texture).texture;

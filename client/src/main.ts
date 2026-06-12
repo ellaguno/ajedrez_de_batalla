@@ -530,6 +530,7 @@ async function handleBoardClick(event: PointerEvent): Promise<void> {
 }
 
 // ----------------------------------------------------------------- arranque
+document.getElementById('app-version')!.textContent = `v${__APP_VERSION__}`;
 applyTheme(storage.loadTheme());
 scene.cinematicsEnabled = storage.loadCinematics();
 hud.setCinematicsEnabled(scene.cinematicsEnabled);

@@ -66,8 +66,9 @@ function makeBones() {
 
 // ------------------------------------------------------------- construcción
 /** Prepara una geometría: la transforma y la liga rígidamente a un hueso. */
-function part(geo, boneIndex, { pos = [0, 0, 0], rotX = 0, rotZ = 0 } = {}) {
+function part(geo, boneIndex, { pos = [0, 0, 0], rotX = 0, rotY = 0, rotZ = 0 } = {}) {
   if (rotX) geo.rotateX(rotX);
+  if (rotY) geo.rotateY(rotY);
   if (rotZ) geo.rotateZ(rotZ);
   geo.translate(...pos);
   const count = geo.attributes.position.count;
@@ -84,67 +85,165 @@ function part(geo, boneIndex, { pos = [0, 0, 0], rotX = 0, rotZ = 0 } = {}) {
 }
 
 const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
-const cyl = (rt, rb, h, s = 12) => new THREE.CylinderGeometry(rt, rb, h, s);
-const sphere = (r) => new THREE.SphereGeometry(r, 12, 8);
-const cone = (r, h, s = 8) => new THREE.ConeGeometry(r, h, s);
+const cyl = (rt, rb, h, s = 18) => new THREE.CylinderGeometry(rt, rb, h, s);
+const sphere = (r, w = 18, h = 14) => new THREE.SphereGeometry(r, w, h);
+const cone = (r, h, s = 12) => new THREE.ConeGeometry(r, h, s);
+const torus = (r, tube) => new THREE.TorusGeometry(r, tube, 12, 24);
+/** Media esfera abierta hacia abajo (cascos). */
+const dome = (r) => new THREE.SphereGeometry(r, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2);
 
-/** Brazo derecho con espada, común a todas las piezas. */
-function armParts() {
-  // En espacio del modelo: el hombro (hueso armR) queda en (~0.17, 0.38, 0).
-  const sx = ARM.x + 0.05;
+/** Pedestal de dos niveles, ligado a la base (root). */
+function pedestal(r) {
   return [
-    part(box(0.08, 0.26, 0.08), 3, { pos: [sx, 0.3, 0] }),
-    part(box(0.05, 0.05, 0.3), 3, { pos: [sx, 0.2, 0.16] }), // empuñadura→hoja
-    part(cone(0.035, 0.12, 4), 3, { pos: [sx, 0.2, 0.36], rotX: Math.PI / 2 }),
+    part(cyl(r * 0.94, r, 0.06, 24), 0, { pos: [0, 0.03, 0] }),
+    part(cyl(r * 0.68, r * 0.9, 0.055, 24), 0, { pos: [0, 0.087, 0] }),
   ];
+}
+
+/**
+ * Brazo derecho armado (hueso armR). La espada lleva empuñadura, guarda,
+ * hoja, punta y pomo; el hacha de la torre, mango largo y pala ancha.
+ */
+function armParts(shoulderY, { scale = 1, axe = false } = {}) {
+  const s = scale;
+  const x = ARM.x + 0.035 * s;
+  const handY = shoulderY - 0.13 * s;
+  const handZ = 0.07;
+  const parts = [
+    part(sphere(0.048 * s, 12, 10), 3, { pos: [x, shoulderY, 0] }), // hombro
+    part(cyl(0.03 * s, 0.038 * s, 0.17 * s, 10), 3, {
+      pos: [x + 0.015, shoulderY - 0.075 * s, 0.035],
+      rotX: -0.4,
+      rotZ: 0.12,
+    }),
+    part(sphere(0.038 * s, 10, 8), 3, { pos: [x + 0.025, handY, handZ] }), // mano
+  ];
+  if (axe) {
+    parts.push(
+      part(cyl(0.014, 0.014, 0.34, 8), 3, { pos: [x + 0.025, handY, handZ + 0.1], rotX: Math.PI / 2 }),
+      part(box(0.022, 0.17, 0.1), 3, { pos: [x + 0.025, handY, handZ + 0.24] }),
+      part(cone(0.014, 0.05, 6), 3, { pos: [x + 0.025, handY, handZ + 0.32], rotX: Math.PI / 2 }),
+    );
+  } else {
+    parts.push(
+      part(cyl(0.015, 0.017, 0.09, 8), 3, { pos: [x + 0.025, handY, handZ], rotX: Math.PI / 2 }), // empuñadura
+      part(box(0.095, 0.02, 0.026), 3, { pos: [x + 0.025, handY, handZ + 0.055] }), // guarda
+      part(box(0.026, 0.013, 0.24), 3, { pos: [x + 0.025, handY, handZ + 0.18] }), // hoja
+      part(cone(0.013, 0.05, 4), 3, { pos: [x + 0.025, handY, handZ + 0.32], rotX: Math.PI / 2 }), // punta
+      part(sphere(0.02, 8, 8), 3, { pos: [x + 0.025, handY, handZ - 0.055] }), // pomo
+    );
+  }
+  return parts;
+}
+
+/** Escudo redondo con umbo en el costado izquierdo (sigue al torso). */
+function shieldParts(y, r) {
+  const x = -(ARM.x + 0.045);
+  return [
+    part(cyl(r, r * 0.92, 0.028, 20), 1, { pos: [x, y, 0.02], rotZ: Math.PI / 2 }),
+    part(sphere(r * 0.28, 10, 8), 1, { pos: [x - 0.022, y, 0.02] }),
+  ];
+}
+
+/** Anillo de puntas para coronas. */
+function crownSpikes(n, radius, y, h = 0.075, r = 0.02) {
+  return Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2;
+    return part(cone(r, h, 6), 2, { pos: [Math.cos(a) * radius, y, Math.sin(a) * radius] });
+  });
 }
 
 const PIECES = {
   pawn: [
-    part(cyl(0.2, 0.24, 0.08), 0, { pos: [0, 0.04, 0] }),
-    part(box(0.22, 0.26, 0.18), 1, { pos: [0, 0.33, 0] }),
-    part(sphere(0.105), 2, { pos: [0, 0.52, 0] }),
-    ...armParts(),
+    ...pedestal(0.23),
+    part(cyl(0.125, 0.19, 0.18, 18), 1, { pos: [0, 0.2, 0] }), // falda
+    part(torus(0.126, 0.018), 1, { pos: [0, 0.29, 0], rotX: Math.PI / 2 }), // cinturón
+    part(cyl(0.112, 0.13, 0.17, 18), 1, { pos: [0, 0.375, 0] }), // torso
+    part(sphere(0.05, 12, 10), 1, { pos: [0.122, 0.45, 0] }), // hombreras
+    part(sphere(0.05, 12, 10), 1, { pos: [-0.122, 0.45, 0] }),
+    part(cyl(0.035, 0.045, 0.05, 10), 2, { pos: [0, 0.48, 0] }), // cuello
+    part(sphere(0.085), 2, { pos: [0, 0.55, 0] }), // cabeza
+    part(dome(0.096), 2, { pos: [0, 0.557, 0] }), // casco
+    part(torus(0.094, 0.014), 2, { pos: [0, 0.553, 0], rotX: Math.PI / 2 }), // ala
+    ...shieldParts(0.37, 0.095),
+    ...armParts(0.43),
   ],
   rook: [
-    part(cyl(0.26, 0.3, 0.09), 0, { pos: [0, 0.045, 0] }),
-    part(box(0.32, 0.34, 0.26), 1, { pos: [0, 0.37, 0] }),
-    part(box(0.34, 0.09, 0.28), 2, { pos: [0, 0.58, 0] }),
-    part(box(0.1, 0.1, 0.28), 2, { pos: [0, 0.67, 0] }),
-    part(box(0.34, 0.1, 0.1), 2, { pos: [0, 0.67, 0] }),
-    ...armParts(),
+    ...pedestal(0.29),
+    part(cyl(0.2, 0.26, 0.2, 18), 1, { pos: [0, 0.21, 0] }),
+    part(torus(0.2, 0.022), 1, { pos: [0, 0.315, 0], rotX: Math.PI / 2 }),
+    part(cyl(0.165, 0.2, 0.2, 18), 1, { pos: [0, 0.42, 0] }),
+    part(sphere(0.068, 12, 10), 1, { pos: [0.185, 0.51, 0] }),
+    part(sphere(0.068, 12, 10), 1, { pos: [-0.185, 0.51, 0] }),
+    part(box(0.17, 0.14, 0.17), 2, { pos: [0, 0.59, 0] }), // cabeza cúbica
+    part(cyl(0.15, 0.16, 0.06, 16), 2, { pos: [0, 0.69, 0] }), // corona de torre
+    part(box(0.062, 0.06, 0.05), 2, { pos: [0.105, 0.75, 0] }), // almenas
+    part(box(0.062, 0.06, 0.05), 2, { pos: [-0.105, 0.75, 0] }),
+    part(box(0.05, 0.06, 0.062), 2, { pos: [0, 0.75, 0.105] }),
+    part(box(0.05, 0.06, 0.062), 2, { pos: [0, 0.75, -0.105] }),
+    ...shieldParts(0.42, 0.13),
+    ...armParts(0.5, { axe: true, scale: 1.15 }),
   ],
   knight: [
-    part(cyl(0.22, 0.26, 0.08), 0, { pos: [0, 0.04, 0] }),
-    part(box(0.24, 0.3, 0.2), 1, { pos: [0, 0.35, 0] }),
-    part(box(0.16, 0.16, 0.32), 2, { pos: [0, 0.58, 0.08] }),
-    part(cone(0.05, 0.12, 4), 2, { pos: [0.06, 0.7, -0.02] }),
-    part(cone(0.05, 0.12, 4), 2, { pos: [-0.06, 0.7, -0.02] }),
-    ...armParts(),
+    ...pedestal(0.25),
+    part(cyl(0.145, 0.21, 0.18, 18), 1, { pos: [0, 0.2, 0] }),
+    part(torus(0.147, 0.02), 1, { pos: [0, 0.29, 0], rotX: Math.PI / 2 }),
+    part(cyl(0.118, 0.148, 0.18, 18), 1, { pos: [0, 0.38, 0] }),
+    part(sphere(0.052, 12, 10), 1, { pos: [0.135, 0.46, 0] }),
+    part(sphere(0.052, 12, 10), 1, { pos: [-0.135, 0.46, 0] }),
+    part(cyl(0.072, 0.1, 0.3, 14), 2, { pos: [0, 0.56, 0.02], rotX: -0.45 }), // cuello equino
+    part(box(0.034, 0.3, 0.085), 2, { pos: [0, 0.6, -0.055], rotX: -0.45 }), // crin
+    part(box(0.122, 0.115, 0.22), 2, { pos: [0, 0.69, 0.12], rotX: -0.12 }), // cabeza
+    part(box(0.082, 0.082, 0.13), 2, { pos: [0, 0.652, 0.255], rotX: -0.1 }), // hocico
+    part(cone(0.032, 0.09, 6), 2, { pos: [0.05, 0.785, 0.05], rotX: -0.2 }), // orejas
+    part(cone(0.032, 0.09, 6), 2, { pos: [-0.05, 0.785, 0.05], rotX: -0.2 }),
+    ...shieldParts(0.38, 0.105),
+    ...armParts(0.45),
   ],
   bishop: [
-    part(cyl(0.22, 0.26, 0.08), 0, { pos: [0, 0.04, 0] }),
-    part(cyl(0.1, 0.2, 0.4), 1, { pos: [0, 0.36, 0] }),
-    part(cone(0.13, 0.24, 8), 2, { pos: [0, 0.62, 0] }),
-    part(sphere(0.045), 2, { pos: [0, 0.76, 0] }),
-    ...armParts(),
+    ...pedestal(0.24),
+    part(cyl(0.112, 0.205, 0.32, 20), 1, { pos: [0, 0.27, 0] }), // túnica
+    part(torus(0.114, 0.016), 1, { pos: [0, 0.425, 0], rotX: Math.PI / 2 }),
+    part(cyl(0.092, 0.113, 0.16, 16), 1, { pos: [0, 0.5, 0] }),
+    part(sphere(0.042, 10, 8), 1, { pos: [0.103, 0.565, 0] }),
+    part(sphere(0.042, 10, 8), 1, { pos: [-0.103, 0.565, 0] }),
+    part(cyl(0.03, 0.04, 0.05, 10), 2, { pos: [0, 0.6, 0] }),
+    part(sphere(0.078), 2, { pos: [0, 0.665, 0] }),
+    part(cone(0.086, 0.2, 16), 2, { pos: [0, 0.795, 0] }), // mitra
+    part(torus(0.07, 0.012), 2, { pos: [0, 0.71, 0], rotX: Math.PI / 2 }),
+    part(sphere(0.022, 8, 8), 2, { pos: [0, 0.9, 0] }),
+    ...armParts(0.55, { scale: 0.92 }),
   ],
   queen: [
-    part(cyl(0.24, 0.28, 0.09), 0, { pos: [0, 0.045, 0] }),
-    part(cyl(0.12, 0.22, 0.5), 1, { pos: [0, 0.41, 0] }),
-    part(cyl(0.16, 0.12, 0.1), 2, { pos: [0, 0.7, 0] }),
-    part(cone(0.05, 0.14, 4), 2, { pos: [0, 0.81, 0] }),
-    part(cone(0.04, 0.1, 4), 2, { pos: [0.09, 0.78, 0] }),
-    part(cone(0.04, 0.1, 4), 2, { pos: [-0.09, 0.78, 0] }),
-    ...armParts(),
+    ...pedestal(0.26),
+    part(cyl(0.102, 0.23, 0.38, 22), 1, { pos: [0, 0.3, 0] }), // vestido
+    part(torus(0.104, 0.015), 1, { pos: [0, 0.485, 0], rotX: Math.PI / 2 }),
+    part(cyl(0.082, 0.103, 0.18, 16), 1, { pos: [0, 0.58, 0] }),
+    part(sphere(0.04, 10, 8), 1, { pos: [0.093, 0.665, 0] }),
+    part(sphere(0.04, 10, 8), 1, { pos: [-0.093, 0.665, 0] }),
+    part(torus(0.06, 0.011), 1, { pos: [0, 0.64, 0], rotX: Math.PI / 2 }), // collar
+    part(cyl(0.028, 0.036, 0.05, 10), 2, { pos: [0, 0.695, 0] }),
+    part(sphere(0.074), 2, { pos: [0, 0.757, 0] }),
+    part(cyl(0.077, 0.084, 0.045, 16), 2, { pos: [0, 0.838, 0] }), // corona
+    ...crownSpikes(5, 0.062, 0.885),
+    part(sphere(0.02, 8, 8), 2, { pos: [0, 0.885, 0] }),
+    ...armParts(0.62, { scale: 0.9 }),
   ],
   king: [
-    part(cyl(0.24, 0.28, 0.09), 0, { pos: [0, 0.045, 0] }),
-    part(cyl(0.13, 0.23, 0.55), 1, { pos: [0, 0.44, 0] }),
-    part(cyl(0.17, 0.13, 0.1), 2, { pos: [0, 0.76, 0] }),
-    part(box(0.06, 0.22, 0.06), 2, { pos: [0, 0.92, 0] }),
-    part(box(0.16, 0.06, 0.06), 2, { pos: [0, 0.94, 0] }),
-    ...armParts(),
+    ...pedestal(0.27),
+    part(cyl(0.118, 0.24, 0.4, 22), 1, { pos: [0, 0.31, 0] }), // túnica real
+    part(torus(0.12, 0.018), 1, { pos: [0, 0.505, 0], rotX: Math.PI / 2 }),
+    part(cyl(0.098, 0.12, 0.2, 16), 1, { pos: [0, 0.61, 0] }),
+    part(sphere(0.05, 12, 10), 1, { pos: [0.113, 0.7, 0] }),
+    part(sphere(0.05, 12, 10), 1, { pos: [-0.113, 0.7, 0] }),
+    part(box(0.24, 0.36, 0.024), 1, { pos: [0, 0.5, -0.125], rotX: 0.1 }), // capa
+    part(cyl(0.032, 0.042, 0.05, 10), 2, { pos: [0, 0.73, 0] }),
+    part(sphere(0.079), 2, { pos: [0, 0.795, 0] }),
+    part(cyl(0.082, 0.09, 0.05, 16), 2, { pos: [0, 0.878, 0] }), // corona
+    ...crownSpikes(6, 0.068, 0.925, 0.06, 0.018),
+    part(box(0.034, 0.13, 0.034), 2, { pos: [0, 0.99, 0] }), // cruz
+    part(box(0.095, 0.034, 0.034), 2, { pos: [0, 1.012, 0] }),
+    ...armParts(0.66),
   ],
 };
 

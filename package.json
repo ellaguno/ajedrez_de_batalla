@@ -1,7 +1,7 @@
 {
   "name": "ajedrez-de-batalla",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Ajedrez 3D vía web inspirado en Battle Chess",
   "workspaces": [
     "client",

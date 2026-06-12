@@ -1,5 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
+
+const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8')) as {
+  version: string;
+};
 
 const apiProxy = {
   '/api': { target: 'http://localhost:3001', ws: true },
@@ -9,6 +14,7 @@ const apiProxy = {
 };
 
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   build: {
     target: 'es2022',
     chunkSizeWarningLimit: 1500,

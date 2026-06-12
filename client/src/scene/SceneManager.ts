@@ -5,12 +5,13 @@ import type { Move } from 'chess.js';
 import type { AppliedMove } from '../types';
 import type { PieceSet } from '../sets/types';
 import { Board3D, squareToWorld, type HighlightKind } from './board';
+import { Environment } from './environment';
 import { Pieces3D } from './pieces';
 import { Tweens } from './tweens';
 
 const THEMES = {
-  dark: { background: 0x15161a, ground: 0x1d1f25, fog: 0x15161a },
-  light: { background: 0xdfd8c8, ground: 0xcfc6b0, fog: 0xdfd8c8 },
+  dark: { background: 0x131017, fog: 0x131017, hemi: 0.42, sun: 1.8, sunColor: 0xffe3bb },
+  light: { background: 0xd9d2c4, fog: 0xd9d2c4, hemi: 0.85, sun: 2.4, sunColor: 0xfff2dd },
 };
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -26,8 +27,10 @@ export class SceneManager {
   private controls: OrbitControls;
   private raycaster = new THREE.Raycaster();
   private clock = new THREE.Clock();
-  private ground: THREE.Mesh;
+  private environment = new Environment();
   private board = new Board3D();
+  private hemi!: THREE.HemisphereLight;
+  private sun!: THREE.DirectionalLight;
   private tweens = new Tweens();
   private pieces = new Pieces3D(this.tweens);
 
@@ -57,36 +60,30 @@ export class SceneManager {
     this.controls.maxDistance = 24;
     this.controls.enablePan = false;
 
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.85);
-    const sun = new THREE.DirectionalLight(0xfff2dd, 2.4);
-    sun.position.set(6, 12, 4);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -7;
-    sun.shadow.camera.right = 7;
-    sun.shadow.camera.top = 7;
-    sun.shadow.camera.bottom = -7;
-    this.scene.add(hemi, sun);
+    this.hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.85);
+    this.sun = new THREE.DirectionalLight(0xfff2dd, 2.4);
+    this.sun.position.set(6, 12, 4);
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.shadow.camera.left = -7;
+    this.sun.shadow.camera.right = 7;
+    this.sun.shadow.camera.top = 7;
+    this.sun.shadow.camera.bottom = -7;
+    this.scene.add(this.hemi, this.sun);
 
-    this.ground = new THREE.Mesh(
-      new THREE.CircleGeometry(34, 48),
-      new THREE.MeshStandardMaterial({ color: 0x1d1f25, roughness: 1 }),
-    );
-    this.ground.rotation.x = -Math.PI / 2;
-    this.ground.position.y = -0.26;
-    this.ground.receiveShadow = true;
-    this.scene.add(this.ground);
-
-    this.scene.fog = new THREE.Fog(0x15161a, 22, 45);
-    this.scene.add(this.board.group, this.pieces.group);
+    this.scene.fog = new THREE.Fog(THEMES.dark.fog, 26, 60);
+    this.scene.add(this.environment.group, this.board.group, this.pieces.group);
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
 
     this.renderer.setAnimationLoop(() => {
-      const dt = Math.min(this.clock.getDelta(), 0.1) * this.speed;
+      // Tope amplio: con FPS bajos (equipos modestos) las animaciones deben
+      // seguir durando su tiempo real, no estirarse.
+      const dt = Math.min(this.clock.getDelta(), 0.25) * this.speed;
       this.tweens.tick(dt);
       this.pieces.update(dt);
+      this.environment.update(dt);
       this.drift?.(dt);
       if (this.inCinematic) {
         this.camera.lookAt(this.lookTarget);
@@ -106,8 +103,11 @@ export class SceneManager {
   setTheme(theme: 'dark' | 'light'): void {
     const t = THEMES[theme];
     this.scene.background = new THREE.Color(t.background);
-    this.scene.fog = new THREE.Fog(t.fog, 22, 45);
-    (this.ground.material as THREE.MeshStandardMaterial).color.setHex(t.ground);
+    this.scene.fog = new THREE.Fog(t.fog, 26, 60);
+    this.hemi.intensity = t.hemi;
+    this.sun.intensity = t.sun;
+    this.sun.color.setHex(t.sunColor);
+    this.environment.setTheme(theme);
   }
 
   syncPieces(pieces: { square: Square; type: Move['piece']; color: Color }[]): void {

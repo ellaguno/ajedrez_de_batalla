@@ -54,6 +54,8 @@ npm run test:smoke --workspace=client
 | `OPENAI_API_KEY` (+`OPENAI_MODEL`) | Jugador OpenAI directo (por defecto `gpt-4o-mini`) |
 | `DEEPSEEK_API_KEY` (+`DEEPSEEK_MODEL`) | Jugador DeepSeek directo (por defecto `deepseek-chat`) |
 | `OPENROUTER_API_KEY` + `OPENROUTER_MODELS` | Cualquier otra IA vía OpenRouter; ids separados por coma, p. ej. `qwen/qwen3-32b,x-ai/grok-4` |
+| `ADB_ADMIN_EMAIL` | Correos (separados por coma) con rol de administrador |
+| `ADB_SETS_DIR` | Carpeta de sets subidos (por defecto `server/data/sets`) |
 
 Los modelos se siembran en la tabla `llm_models` al arrancar el servidor
 (el panel de administración del hito 7 permitirá gestionarlos sin variables
@@ -94,8 +96,12 @@ de entorno).
   legales, se valida con chess.js y se reintenta con feedback ante jugadas
   ilegales (con jugada aleatoria como último recurso para no colgar la partida).
   Requiere sesión iniciada.
-- [ ] **Hito 7 — Administración**: panel admin para API keys, configurar IAs
-  disponibles y subir nuevos sets de assets.
+- [x] **Hito 7 — Administración**: página `/admin.html` (enlace ⚙️ en el juego,
+  solo administradores — designados con `ADB_ADMIN_EMAIL`). Gestiona los modelos
+  LLM con sus claves API desde la UI (alta, edición, activar/desactivar, borrado;
+  las claves nunca se devuelven al navegador) y permite subir nuevos sets de
+  piezas como ZIP (`set.json` + los `.glb` que declara), que aparecen al instante
+  en el selector del juego y se sirven desde `/usersets/`.
 
 ## Pipeline de assets 3D (hito 2)
 
@@ -130,6 +136,10 @@ El set de referencia "Guerreros Geométricos" se genera con
 con espada, ligado rígido por vértice). Cualquier set externo entra igual:
 exportar GLB con esqueleto + clips desde Blender/Mixamo/Meshy y escribir su
 `set.json`.
+
+Para instalar un set sin tocar el repositorio: empaquetar `set.json` + los
+`.glb` en un ZIP (sin subcarpetas) y subirlo desde la página de administración
+(`/admin.html`). Queda en `server/data/sets/` y se sirve bajo `/usersets/`.
 
 Opciones para crear los assets (si no se modelan a mano en Blender):
 

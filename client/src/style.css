@@ -432,6 +432,142 @@ dialog h2 {
   text-align: center;
 }
 
+/* ------------------------------- página de administración ----- */
+.admin-page {
+  overflow: auto;
+}
+
+html:has(body.admin-page) {
+  overflow: auto;
+}
+
+.admin-page #topbar {
+  position: sticky;
+}
+
+.btn-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+#btn-admin {
+  font-size: 18px;
+  text-decoration: none;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+#btn-admin:hover {
+  border-color: var(--accent);
+}
+
+#admin-main,
+#admin-denied {
+  max-width: 980px;
+  margin: 24px auto;
+  padding: 0 16px 60px;
+}
+
+.admin-section {
+  margin-bottom: 36px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.admin-section h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+#llm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 12px 0 18px;
+}
+
+#llm-table th,
+#llm-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+#llm-table button {
+  font-size: 12px;
+  padding: 3px 8px;
+  margin-right: 4px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.form-grid input,
+.form-grid select {
+  font: inherit;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.upload-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 10px 0;
+}
+
+#sets-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#sets-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+#sets-list li.empty {
+  justify-content: center;
+  color: var(--muted);
+  border-style: dashed;
+}
+
+#admin-msg {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  backdrop-filter: blur(6px);
+}
+
+#admin-msg.error {
+  border-color: #e5533d;
+  color: #e5533d;
+}
+
 @media (max-width: 720px) {
   #panel {
     display: none;

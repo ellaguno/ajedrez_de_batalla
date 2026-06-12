@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
-import { db, type UserRow } from './db.js';
+import { adminEmails, db, type UserRow } from './db.js';
 import { sendMail } from './mailer.js';
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: string, len: number) => Promise<Buffer>;
@@ -74,6 +74,22 @@ export function requireUser(req: FastifyRequest, reply: FastifyReply): UserRow |
   return user;
 }
 
+export function requireAdmin(req: FastifyRequest, reply: FastifyReply): UserRow | null {
+  const user = requireUser(req, reply);
+  if (!user) return null;
+  if (!user.is_admin) {
+    void reply.code(403).send({ error: 'no-admin' });
+    return null;
+  }
+  return user;
+}
+
+export const publicUser = (u: UserRow) => ({
+  email: u.email,
+  name: u.name,
+  admin: u.is_admin === 1,
+});
+
 // Limitador simple en memoria para los endpoints de credenciales.
 const hits = new Map<string, { count: number; resetAt: number }>();
 function rateLimited(req: FastifyRequest, max = 12, windowMs = 60_000): boolean {
@@ -119,9 +135,10 @@ export function authRoutes(app: FastifyInstance): void {
     }
 
     const passHash = await hashPassword(password);
+    const isAdmin = adminEmails().includes(normalized) ? 1 : 0;
     const info = db
-      .prepare('INSERT INTO users (email, name, pass_hash) VALUES (?, ?, ?)')
-      .run(normalized, name?.trim() || null, passHash);
+      .prepare('INSERT INTO users (email, name, pass_hash, is_admin) VALUES (?, ?, ?, ?)')
+      .run(normalized, name?.trim() || null, passHash, isAdmin);
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid) as UserRow;
     await sendVerifyMail(req, user);
     return { ok: true };
@@ -180,7 +197,7 @@ export function authRoutes(app: FastifyInstance): void {
       secure: process.env.NODE_ENV === 'production',
       maxAge: SESSION_DAYS * 24 * 3600,
     });
-    return { email: user.email, name: user.name };
+    return publicUser(user);
   });
 
   app.post('/api/auth/logout', async (req, reply) => {
@@ -194,6 +211,6 @@ export function authRoutes(app: FastifyInstance): void {
   // navegador en cada arranque anónimo).
   app.get('/api/auth/me', async (req) => {
     const user = currentUser(req);
-    return { user: user ? { email: user.email, name: user.name } : null };
+    return { user: user ? publicUser(user) : null };
   });
 }

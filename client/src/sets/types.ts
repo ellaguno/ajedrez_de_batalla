@@ -18,6 +18,8 @@ export interface PieceSetInfo {
   name: string;
   /** Subdirectorio bajo /sets/ con set.json y modelos. Ausente en sets builtin. */
   dir?: string;
+  /** Ruta base absoluta (sets subidos por el administrador, p. ej. /usersets/x). */
+  base?: string;
   builtin?: boolean;
 }
 

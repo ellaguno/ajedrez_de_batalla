@@ -5,6 +5,7 @@ import type { GameConfig } from './types';
 export interface User {
   email: string;
   name: string | null;
+  admin?: boolean;
 }
 
 export interface GameSummary {
@@ -89,6 +90,57 @@ export const llm = {
   models: () => call<LlmModelInfo[]>('GET', '/llm/models'),
   move: (modelId: number, fen: string, history: string[]) =>
     call<LlmMove>('POST', '/llm/move', { modelId, fen, history }),
+};
+
+export interface AdminLlmModel {
+  id: number;
+  name: string;
+  provider: 'openai' | 'anthropic';
+  baseUrl: string | null;
+  model: string;
+  hasKey: boolean;
+  enabled: boolean;
+}
+
+export interface AdminLlmPayload {
+  name: string;
+  provider: 'openai' | 'anthropic';
+  baseUrl?: string;
+  model: string;
+  apiKey?: string;
+  enabled?: boolean;
+}
+
+export interface UploadedSet {
+  id: string;
+  name: string;
+  base: string;
+}
+
+export const admin = {
+  llmList: () => call<AdminLlmModel[]>('GET', '/admin/llm'),
+  llmCreate: (payload: AdminLlmPayload) => call<{ id: number }>('POST', '/admin/llm', payload),
+  llmUpdate: (id: number, payload: AdminLlmPayload) =>
+    call<{ ok: boolean }>('PUT', `/admin/llm/${id}`, payload),
+  llmRemove: (id: number) => call<{ ok: boolean }>('DELETE', `/admin/llm/${id}`),
+  setsList: () => call<UploadedSet[]>('GET', '/admin/sets'),
+  setRemove: (id: string) => call<{ ok: boolean }>('DELETE', `/admin/sets/${id}`),
+  async setUpload(file: File): Promise<{ ok: boolean; id: string }> {
+    const form = new FormData();
+    form.append('archivo', file);
+    const res = await fetch('/api/admin/sets', {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: form,
+    });
+    const data = (await res.json().catch(() => null)) as
+      | { ok: boolean; id: string; error?: string; detail?: string }
+      | null;
+    if (!res.ok) {
+      throw new ApiError(res.status, `${data?.error ?? `http-${res.status}`}${data?.detail ? `: ${data.detail}` : ''}`);
+    }
+    return data!;
+  },
 };
 
 export const games = {

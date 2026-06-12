@@ -77,12 +77,31 @@ CREATE INDEX IF NOT EXISTS idx_games_user ON games(user_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 `);
 
+// Migración: columna de administrador en instalaciones previas.
+const userCols = db.prepare('PRAGMA table_info(users)').all() as { name: string }[];
+if (!userCols.some((c) => c.name === 'is_admin')) {
+  db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0');
+}
+
+/** Correos designados administradores vía ADB_ADMIN_EMAIL (separados por coma). */
+export function adminEmails(): string[] {
+  return (process.env.ADB_ADMIN_EMAIL ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+for (const email of adminEmails()) {
+  db.prepare('UPDATE users SET is_admin = 1 WHERE email = ?').run(email);
+}
+
 export interface UserRow {
   id: number;
   email: string;
   name: string | null;
   pass_hash: string;
   verified: number;
+  is_admin: number;
 }
 
 export interface LlmModelRow {

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♞</text></svg>" />
+    <title>Administración — Ajedrez de Batalla</title>
+  </head>
+  <body class="admin-page">
+    <header id="topbar">
+      <h1>♞ Administración</h1>
+      <div class="spacer"></div>
+      <a href="/" class="btn-link">← Volver al juego</a>
+    </header>
+
+    <main id="admin-main" hidden>
+      <section class="admin-section">
+        <h2>Modelos LLM</h2>
+        <p class="muted">
+          Las claves API se guardan en el servidor y nunca se muestran. Deja la clave vacía al
+          editar para conservar la actual.
+        </p>
+        <table id="llm-table">
+          <thead>
+            <tr><th>Nombre</th><th>Proveedor</th><th>Modelo</th><th>URL base</th><th>Clave</th><th>Activo</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <form id="llm-form">
+          <h3 id="llm-form-title">Añadir modelo</h3>
+          <div class="form-grid">
+            <input id="llm-name" placeholder="Nombre visible (ej. Qwen 3)" required maxlength="60" />
+            <select id="llm-provider">
+              <option value="openai">Compatible OpenAI (OpenAI/DeepSeek/OpenRouter…)</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+            </select>
+            <input id="llm-model" placeholder="Id del modelo (ej. qwen/qwen3-32b)" required maxlength="120" />
+            <input id="llm-base" placeholder="URL base (ej. https://openrouter.ai/api/v1)" maxlength="300" />
+            <input id="llm-key" type="password" placeholder="Clave API" maxlength="400" autocomplete="off" />
+            <label class="check-row"><input type="checkbox" id="llm-enabled" checked /> Activo</label>
+          </div>
+          <div class="dlg-buttons">
+            <button type="button" id="llm-cancel" hidden>Cancelar edición</button>
+            <button type="submit" class="primary">Guardar</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="admin-section">
+        <h2>Sets de piezas</h2>
+        <p class="muted">
+          Sube un ZIP con <code>set.json</code> y los modelos <code>.glb</code> que declara
+          (ver formato en el README del proyecto). El set aparece al instante en el selector del juego.
+        </p>
+        <div class="upload-row">
+          <input type="file" id="set-file" accept=".zip" />
+          <button id="set-upload" class="primary">Subir set</button>
+        </div>
+        <ul id="sets-list"></ul>
+      </section>
+
+      <div id="admin-msg" hidden></div>
+    </main>
+
+    <main id="admin-denied" hidden>
+      <p>Necesitas una cuenta de administrador para ver esta página.</p>
+      <p><a href="/" class="btn-link">← Volver al juego</a></p>
+    </main>
+
+    <script type="module" src="/src/admin.ts"></script>
+  </body>
+</html>

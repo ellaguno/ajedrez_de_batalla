@@ -127,6 +127,7 @@ export class AuthUI {
       : '—';
     $<HTMLButtonElement>('btn-games').hidden = !user;
     $<HTMLButtonElement>('btn-online').hidden = !user;
+    $<HTMLAnchorElement>('btn-admin').hidden = !user?.admin;
     this.onChange(user);
   }
 }

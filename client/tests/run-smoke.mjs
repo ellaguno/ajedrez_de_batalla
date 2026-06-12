@@ -17,6 +17,8 @@ const server = spawn('node', [join(serverDir, 'dist', 'index.js')], {
     PORT,
     ADB_DEV: '1',
     ADB_DB: DB,
+    ADB_SETS_DIR: `/tmp/adb-smoke-sets-${process.pid}`,
+    ADB_ADMIN_EMAIL: 'admin@example.com',
     LOG_LEVEL: 'warn',
   },
   stdio: 'inherit',
@@ -43,6 +45,7 @@ const TESTS = [
   'smoke-account.mjs',
   'smoke-llm.mjs',
   'smoke-online.mjs',
+  'smoke-admin.mjs',
 ];
 
 let failed = false;
@@ -62,6 +65,7 @@ try {
 } finally {
   server.kill();
   for (const suffix of ['', '-wal', '-shm']) rmSync(DB + suffix, { force: true });
+  rmSync(`/tmp/adb-smoke-sets-${process.pid}`, { recursive: true, force: true });
 }
 console.log(failed ? '\n❌ Pruebas de humo con fallos' : '\n✅ Pruebas de humo OK');
 process.exit(failed ? 1 : 0);

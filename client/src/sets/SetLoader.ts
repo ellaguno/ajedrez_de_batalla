@@ -19,9 +19,9 @@ export async function listSets(): Promise<PieceSetInfo[]> {
 }
 
 export async function loadSet(info: PieceSetInfo): Promise<PieceSet> {
-  if (info.builtin || info.id === 'clasico' || !info.dir) return classicSet();
+  if (info.builtin || info.id === 'clasico' || (!info.dir && !info.base)) return classicSet();
 
-  const base = `/sets/${info.dir}`;
+  const base = info.base ?? `/sets/${info.dir}`;
   const res = await fetch(`${base}/set.json`);
   if (!res.ok) throw new Error(`set.json de "${info.id}": HTTP ${res.status}`);
   const manifest = (await res.json()) as SetManifest;

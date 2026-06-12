@@ -113,6 +113,28 @@ check('el set aparece en el catálogo', uploaded?.base === '/usersets/guerreros-
 const glb = await fetch(`${BASE}/usersets/guerreros-arena/pawn.glb`);
 check('los GLB del set se sirven', glb.status === 200);
 
+// Fondos HDRI: subir, listar en el catálogo y borrar
+const hdrBuf = Buffer.concat([
+  Buffer.from('#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y 1 +X 1\n', 'ascii'),
+  Buffer.from([128, 128, 128, 129]),
+]);
+const hdrForm = new FormData();
+hdrForm.append('archivo', new Blob([hdrBuf]), 'fondo-prueba.hdr');
+const hdrUp = await fetch(`${BASE}/api/admin/hdri`, {
+  method: 'POST',
+  headers: { cookie: admin.cookie },
+  body: hdrForm,
+});
+check('subir HDRI', hdrUp.status === 200 && (await hdrUp.json()).id === 'fondo-prueba.hdr');
+const hdriIndex = await (await fetch(`${BASE}/hdri/index.json`)).json();
+check(
+  'el HDRI aparece en el catálogo',
+  hdriIndex.hdris.some((h) => h.url === '/userhdri/fondo-prueba.hdr'),
+);
+await apiAs(admin.cookie, 'DELETE', '/api/admin/hdri/fondo-prueba.hdr');
+const hdriAfter = await (await fetch(`${BASE}/hdri/index.json`)).json();
+check('borrar HDRI', !hdriAfter.hdris.some((h) => h.id === 'fondo-prueba.hdr'));
+
 // En el juego: el set subido se puede seleccionar y cargar
 const browser = await chromium.launch({ executablePath: exe, headless: true });
 const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });

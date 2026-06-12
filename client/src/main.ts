@@ -3,6 +3,7 @@ import { Chess } from 'chess.js';
 import type { Move, Square } from 'chess.js';
 import { GameController } from './game/GameController';
 import { piecesOf } from './game/util';
+import { sfx } from './scene/audio';
 import { SceneManager } from './scene/SceneManager';
 import type { HighlightKind } from './scene/board';
 import { Hud } from './ui/hud';
@@ -182,12 +183,14 @@ const controller = new GameController({
     hud.setStatus(statusText());
     hud.setMoves(controller.chess.history({ verbose: true }));
     hud.setPlayers(controller.config);
+    if (controller.chess.isCheck() && !controller.chess.isGameOver()) sfx.check();
     persistLocal();
     scheduleServerSave();
   },
   onGameOver(info: GameOverInfo) {
     if (replay) return;
     hud.showBanner(gameOverText(info));
+    sfx.gameOver(info.reason === 'checkmate');
   },
   onAutoPlayerError(message: string) {
     if (replay) return;
@@ -252,6 +255,19 @@ const hud = new Hud({
   onCinematicsToggle(enabled: boolean) {
     scene.cinematicsEnabled = enabled;
     storage.saveCinematics(enabled);
+  },
+  onSoundToggle(enabled: boolean) {
+    sfx.enabled = enabled;
+    if (enabled) sfx.knock();
+    storage.saveSound(enabled);
+  },
+  onBackdropChange(value: string) {
+    storage.saveBackdrop(value);
+    scene.setBackdrop(value).catch((err) => {
+      console.error('No se pudo cargar el fondo', err);
+      hud.showBanner('No se pudo cargar ese fondo.');
+      void scene.setBackdrop('sala');
+    });
   },
 });
 
@@ -491,6 +507,9 @@ new GamesUI({
 });
 
 // ------------------------------------------------------------- interacción
+// El audio del navegador se desbloquea con el primer gesto del usuario.
+window.addEventListener('pointerdown', () => sfx.unlock(), { once: true });
+
 canvas.addEventListener('pointerdown', (event) => {
   if (event.button !== 0) return;
   const downX = event.clientX;
@@ -534,6 +553,8 @@ document.getElementById('app-version')!.textContent = `v${__APP_VERSION__}`;
 applyTheme(storage.loadTheme());
 scene.cinematicsEnabled = storage.loadCinematics();
 hud.setCinematicsEnabled(scene.cinematicsEnabled);
+sfx.enabled = storage.loadSound();
+hud.setSoundEnabled(sfx.enabled);
 
 /** El tablero no acepta interacción hasta que termina el arranque. */
 let appReady = false;
@@ -548,6 +569,15 @@ async function start(): Promise<void> {
   availableSets = await listSets();
   hud.populateSets(availableSets, activeSetId);
   await applySetById(activeSetId);
+
+  const backdrop = storage.loadBackdrop();
+  hud.populateBackdrops(await api.listHdris(), backdrop);
+  if (backdrop !== 'sala') {
+    scene.setBackdrop(backdrop).catch(() => {
+      storage.saveBackdrop('sala');
+      hud.populateBackdrops([], 'sala');
+    });
+  }
 
   const saved = storage.loadGame();
   const defaultConfig: GameConfig = {

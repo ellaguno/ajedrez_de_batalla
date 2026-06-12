@@ -156,13 +156,55 @@ $('set-upload').addEventListener('click', () => {
     .catch((e) => show(`No se pudo subir (${describe(e)})`, true));
 });
 
+// ------------------------------------------------------------------- HDRI
+async function refreshHdris(): Promise<void> {
+  const hdris = await api.admin.hdriList();
+  const list = $<HTMLUListElement>('hdri-list');
+  if (hdris.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = 'Aún no hay fondos subidos (los de fábrica no se listan aquí).';
+    list.replaceChildren(li);
+    return;
+  }
+  list.replaceChildren(
+    ...hdris.map((h) => {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.textContent = h.name;
+      const del = document.createElement('button');
+      del.textContent = 'Borrar';
+      del.addEventListener('click', () => {
+        if (!window.confirm(`¿Borrar el fondo "${h.name}"?`)) return;
+        void api.admin.hdriRemove(h.id).then(refreshHdris);
+      });
+      li.append(span, del);
+      return li;
+    }),
+  );
+}
+
+$('hdri-upload').addEventListener('click', () => {
+  const input = $<HTMLInputElement>('hdri-file');
+  const file = input.files?.[0];
+  if (!file) return show('Elige un archivo .hdr primero.', true);
+  void api.admin
+    .hdriUpload(file)
+    .then((r) => {
+      show(`Fondo "${r.id}" subido.`);
+      input.value = '';
+      return refreshHdris();
+    })
+    .catch((e) => show(`No se pudo subir (${describe(e)})`, true));
+});
+
 // --------------------------------------------------------------- arranque
 void (async () => {
   try {
     const me = await api.auth.me();
     if (!me.user?.admin) throw new Error('no-admin');
     $('admin-main').hidden = false;
-    await Promise.all([refreshLlm(), refreshSets()]);
+    await Promise.all([refreshLlm(), refreshSets(), refreshHdris()]);
   } catch {
     $('admin-denied').hidden = false;
   }

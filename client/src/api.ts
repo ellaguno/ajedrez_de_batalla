@@ -117,6 +117,23 @@ export interface UploadedSet {
   base: string;
 }
 
+export interface HdriInfo {
+  id: string;
+  name: string;
+  url: string;
+}
+
+export async function listHdris(): Promise<HdriInfo[]> {
+  try {
+    const res = await fetch('/hdri/index.json');
+    if (!res.ok) return [];
+    const data = (await res.json()) as { hdris: HdriInfo[] };
+    return Array.isArray(data.hdris) ? data.hdris : [];
+  } catch {
+    return [];
+  }
+}
+
 export const admin = {
   llmList: () => call<AdminLlmModel[]>('GET', '/admin/llm'),
   llmCreate: (payload: AdminLlmPayload) => call<{ id: number }>('POST', '/admin/llm', payload),
@@ -125,6 +142,22 @@ export const admin = {
   llmRemove: (id: number) => call<{ ok: boolean }>('DELETE', `/admin/llm/${id}`),
   setsList: () => call<UploadedSet[]>('GET', '/admin/sets'),
   setRemove: (id: string) => call<{ ok: boolean }>('DELETE', `/admin/sets/${id}`),
+  hdriList: () => call<HdriInfo[]>('GET', '/admin/hdri'),
+  hdriRemove: (file: string) => call<{ ok: boolean }>('DELETE', `/admin/hdri/${file}`),
+  async hdriUpload(file: File): Promise<{ ok: boolean; id: string }> {
+    const form = new FormData();
+    form.append('archivo', file);
+    const res = await fetch('/api/admin/hdri', {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: form,
+    });
+    const data = (await res.json().catch(() => null)) as
+      | { ok: boolean; id: string; error?: string }
+      | null;
+    if (!res.ok) throw new ApiError(res.status, data?.error ?? `http-${res.status}`);
+    return data!;
+  },
   async setUpload(file: File): Promise<{ ok: boolean; id: string }> {
     const form = new FormData();
     form.append('archivo', file);

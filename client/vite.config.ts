@@ -9,8 +9,10 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8'))
 const apiProxy = {
   '/api': { target: 'http://localhost:3001', ws: true },
   '/usersets': 'http://localhost:3001',
-  // El catálogo de sets lo genera el servidor (fusiona builtin + subidos).
+  '/userhdri': 'http://localhost:3001',
+  // Los catálogos los genera el servidor (fusiona builtin + subidos).
   '/sets/index.json': 'http://localhost:3001',
+  '/hdri/index.json': 'http://localhost:3001',
 };
 
 export default defineConfig({

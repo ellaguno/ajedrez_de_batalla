@@ -1,0 +1,14 @@
+{
+  "hdris": [
+    {
+      "id": "atardecer",
+      "name": "Atardecer",
+      "url": "/hdri/atardecer.hdr"
+    },
+    {
+      "id": "noche",
+      "name": "Noche estrellada",
+      "url": "/hdri/noche.hdr"
+    }
+  ]
+}

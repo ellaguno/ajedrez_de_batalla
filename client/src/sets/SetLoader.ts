@@ -34,26 +34,54 @@ export async function loadSet(info: PieceSetInfo): Promise<PieceSet> {
   const manifest = (await res.json()) as SetManifest;
 
   const loader = new GLTFLoader();
-  const templates = new Map<PieceType, { scene: THREE.Object3D; clips: THREE.AnimationClip[] }>();
-  await Promise.all(
-    (Object.entries(manifest.pieces) as [PieceType, { model: string }][]).map(
-      async ([type, def]) => {
-        const gltf = await loader.loadAsync(`${base}/${def.model}`);
+  interface Template {
+    scene: THREE.Object3D;
+    clips: THREE.AnimationClip[];
+  }
+  const cache = new Map<string, Promise<Template>>();
+  const loadModel = (file: string): Promise<Template> => {
+    let p = cache.get(file);
+    if (!p) {
+      p = loader.loadAsync(`${base}/${file}`).then((gltf) => {
         gltf.scene.traverse((o) => {
           if (o instanceof THREE.Mesh) {
             o.castShadow = true;
             o.frustumCulled = false; // los huesos mueven la malla fuera de su AABB original
           }
         });
-        templates.set(type, { scene: gltf.scene, clips: gltf.animations });
+        return { scene: gltf.scene, clips: gltf.animations };
+      });
+      cache.set(file, p);
+    }
+    return p;
+  };
+
+  // Cada pieza: un modelo teñido por bando ("model") o un modelo por color
+  // con sus propios materiales ("modelW"/"modelB").
+  const templates = new Map<string, Template>();
+  await Promise.all(
+    (Object.entries(manifest.pieces) as [PieceType, import('./types').PieceDef][]).flatMap(
+      ([type, def]) => {
+        const jobs: Promise<void>[] = [];
+        for (const color of ['w', 'b'] as const) {
+          const file = color === 'w' ? (def.modelW ?? def.model) : (def.modelB ?? def.model);
+          if (!file) throw new Error(`Pieza "${type}" sin modelo en el set "${manifest.id}"`);
+          jobs.push(
+            loadModel(file).then((t) => {
+              templates.set(`${type}:${color}`, t);
+            }),
+          );
+        }
+        return jobs;
       },
     ),
   );
 
-  // Un material por color para todo el set (las piezas se tiñen al instanciar).
+  // Un material por color para todo el set (solo para piezas con "model").
+  const colors = manifest.colors ?? { w: '#e8dfc8', b: '#3a3531' };
   const materials: Record<Color, THREE.MeshStandardMaterial> = {
-    w: new THREE.MeshStandardMaterial({ color: manifest.colors.w, roughness: 0.5, metalness: 0.1 }),
-    b: new THREE.MeshStandardMaterial({ color: manifest.colors.b, roughness: 0.5, metalness: 0.1 }),
+    w: new THREE.MeshStandardMaterial({ color: colors.w, roughness: 0.5, metalness: 0.1 }),
+    b: new THREE.MeshStandardMaterial({ color: colors.b, roughness: 0.5, metalness: 0.1 }),
   };
   const scale = manifest.scale ?? 1;
 
@@ -62,12 +90,16 @@ export async function loadSet(info: PieceSetInfo): Promise<PieceSet> {
     name: manifest.name,
     board: manifest.board,
     createPiece(type: PieceType, color: Color): PieceActor {
-      const template = templates.get(type);
+      const template = templates.get(`${type}:${color}`);
       if (!template) throw new Error(`El set "${manifest.id}" no trae la pieza "${type}"`);
+      const def = manifest.pieces[type];
+      const ownMaterials = color === 'w' ? !!def.modelW : !!def.modelB;
       const model = skeletonClone(template.scene);
-      model.traverse((o) => {
-        if (o instanceof THREE.Mesh) o.material = materials[color];
-      });
+      if (!ownMaterials) {
+        model.traverse((o) => {
+          if (o instanceof THREE.Mesh) o.material = materials[color];
+        });
+      }
       model.scale.setScalar(scale);
       // Cada bando mira hacia su rival (blancas hacia -z, negras hacia +z).
       model.rotation.y = color === 'w' ? Math.PI : 0;

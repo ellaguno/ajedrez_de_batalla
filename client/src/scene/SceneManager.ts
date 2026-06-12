@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import type { Square, Color } from 'chess.js';
 import type { Move } from 'chess.js';
 import type { AppliedMove } from '../types';
@@ -31,6 +32,10 @@ export class SceneManager {
   private board = new Board3D();
   private hemi!: THREE.HemisphereLight;
   private sun!: THREE.DirectionalLight;
+  private currentTheme: 'dark' | 'light' = 'dark';
+  /** 'sala' (entorno 3D) o URL de un HDRI equirectangular. */
+  private backdrop = 'sala';
+  private hdrCache = new Map<string, { background: THREE.Texture; env: THREE.Texture }>();
   private tweens = new Tweens();
   private pieces = new Pieces3D(this.tweens);
 
@@ -101,13 +106,45 @@ export class SceneManager {
   }
 
   setTheme(theme: 'dark' | 'light'): void {
+    this.currentTheme = theme;
     const t = THEMES[theme];
-    this.scene.background = new THREE.Color(t.background);
-    this.scene.fog = new THREE.Fog(t.fog, 26, 60);
+    if (this.backdrop === 'sala') {
+      this.scene.background = new THREE.Color(t.background);
+      this.scene.fog = new THREE.Fog(t.fog, 26, 60);
+    }
     this.hemi.intensity = t.hemi;
     this.sun.intensity = t.sun;
     this.sun.color.setHex(t.sunColor);
     this.environment.setTheme(theme);
+  }
+
+  /**
+   * Cambia el fondo: 'sala' restaura el entorno 3D; una URL .hdr carga un
+   * panorama equirectangular que además ilumina la escena (PMREM).
+   */
+  async setBackdrop(value: string): Promise<void> {
+    if (value === 'sala') {
+      this.backdrop = 'sala';
+      this.environment.group.visible = true;
+      this.scene.environment = null;
+      this.setTheme(this.currentTheme);
+      return;
+    }
+    let entry = this.hdrCache.get(value);
+    if (!entry) {
+      const texture = await new RGBELoader().loadAsync(value);
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      const pmrem = new THREE.PMREMGenerator(this.renderer);
+      const env = pmrem.fromEquirectangular(texture).texture;
+      pmrem.dispose();
+      entry = { background: texture, env };
+      this.hdrCache.set(value, entry);
+    }
+    this.backdrop = value;
+    this.environment.group.visible = false;
+    this.scene.background = entry.background;
+    this.scene.environment = entry.env;
+    this.scene.fog = null;
   }
 
   syncPieces(pieces: { square: Square; type: Move['piece']; color: Color }[]): void {

@@ -23,15 +23,25 @@ export interface PieceSetInfo {
   builtin?: boolean;
 }
 
+/**
+ * Pieza del manifiesto: `model` (un GLB teñido con `colors` por bando) o
+ * `modelW`/`modelB` (un GLB por color, conservando sus propios materiales).
+ */
+export interface PieceDef {
+  model?: string;
+  modelW?: string;
+  modelB?: string;
+}
+
 /** Manifiesto set.json de un set basado en archivos. */
 export interface SetManifest {
   format: number;
   id: string;
   name: string;
-  pieces: Record<PieceType, { model: string }>;
+  pieces: Record<PieceType, PieceDef>;
   /** clip canónico → nombre del clip dentro de los GLB. */
   clips: Partial<Record<ClipKey, string>>;
-  colors: Record<Color, string>;
+  colors?: Record<Color, string>;
   scale?: number;
   board?: BoardStyle;
 }

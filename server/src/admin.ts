@@ -18,7 +18,9 @@ import { requireAdmin } from './auth.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const setsDir = process.env.ADB_SETS_DIR ?? join(here, '..', 'data', 'sets');
+const hdriDir = process.env.ADB_HDRI_DIR ?? join(here, '..', 'data', 'hdri');
 const clientDist = process.env.ADB_CLIENT_DIST ?? join(here, '..', '..', 'client', 'dist');
+const clientPublic = join(here, '..', '..', 'client', 'public');
 
 const SET_ID = /^[a-z0-9][a-z0-9-]{1,29}$/;
 const MAX_ZIP_BYTES = 80 * 1024 * 1024;
@@ -26,7 +28,7 @@ const MAX_ZIP_BYTES = 80 * 1024 * 1024;
 interface SetManifest {
   id: string;
   name: string;
-  pieces: Record<string, { model: string }>;
+  pieces: Record<string, { model?: string; modelW?: string; modelB?: string }>;
 }
 
 const maskedModel = (m: LlmModelRow) => ({
@@ -53,6 +55,19 @@ function uploadedSets(): { id: string; name: string; base: string }[] {
     }
   }
   return out;
+}
+
+const HDRI_NAME = /^[\w-]{1,60}\.hdr$/i;
+
+function uploadedHdris(): { id: string; name: string; url: string }[] {
+  if (!existsSync(hdriDir)) return [];
+  return readdirSync(hdriDir)
+    .filter((f) => HDRI_NAME.test(f))
+    .map((f) => ({
+      id: f,
+      name: f.replace(/\.hdr$/i, '').replaceAll(/[-_]/g, ' '),
+      url: `/userhdri/${f}`,
+    }));
 }
 
 const llmBodySchema = {
@@ -82,9 +97,15 @@ interface LlmBody {
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
   await app.register(multipart, { limits: { fileSize: MAX_ZIP_BYTES, files: 1 } });
   mkdirSync(setsDir, { recursive: true });
+  mkdirSync(hdriDir, { recursive: true });
   await app.register(fastifyStatic, {
     root: setsDir,
     prefix: '/usersets/',
+    decorateReply: false,
+  });
+  await app.register(fastifyStatic, {
+    root: hdriDir,
+    prefix: '/userhdri/',
     decorateReply: false,
   });
 
@@ -94,7 +115,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     let builtin: { sets: unknown[] } = { sets: [] };
     const candidates = [
       join(clientDist, 'sets', 'index.json'),
-      join(here, '..', '..', 'client', 'public', 'sets', 'index.json'),
+      join(clientPublic, 'sets', 'index.json'),
     ];
     for (const path of candidates) {
       try {
@@ -105,6 +126,23 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       }
     }
     return { sets: [...builtin.sets, ...uploadedSets()] };
+  });
+
+  // Catálogo de fondos HDRI: los de fábrica + los subidos.
+  app.get('/hdri/index.json', async () => {
+    let builtin: { hdris: unknown[] } = { hdris: [] };
+    for (const path of [
+      join(clientDist, 'hdri', 'index.json'),
+      join(clientPublic, 'hdri', 'index.json'),
+    ]) {
+      try {
+        builtin = JSON.parse(readFileSync(path, 'utf8'));
+        break;
+      } catch {
+        /* probar la siguiente ruta */
+      }
+    }
+    return { hdris: [...builtin.hdris, ...uploadedHdris()] };
   });
 
   // ------------------------------------------------------------ modelos LLM
@@ -192,8 +230,16 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     if (!manifest.name || !manifest.pieces) {
       return reply.code(400).send({ error: 'manifiesto-incompleto' });
     }
-    const models = Object.values(manifest.pieces).map((p) => p.model);
-    if (models.length < 6) return reply.code(400).send({ error: 'faltan-piezas' });
+    // Cada pieza necesita "model" (teñido por bando) o "modelW"+"modelB".
+    const models: string[] = [];
+    for (const p of Object.values(manifest.pieces)) {
+      if (p.model) models.push(p.model);
+      else if (p.modelW && p.modelB) models.push(p.modelW, p.modelB);
+      else return reply.code(400).send({ error: 'pieza-sin-modelo' });
+    }
+    if (Object.keys(manifest.pieces).length < 6) {
+      return reply.code(400).send({ error: 'faltan-piezas' });
+    }
     for (const model of models) {
       if (!/^[\w-]+\.glb$/i.test(model) || !zip.getEntry(model)) {
         return reply.code(400).send({ error: 'falta-modelo', detail: model });
@@ -217,6 +263,42 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const dest = join(setsDir, id);
     if (!existsSync(dest)) return reply.code(404).send({ error: 'no-existe' });
     rmSync(dest, { recursive: true, force: true });
+    return { ok: true };
+  });
+
+  // ------------------------------------------------------------------ HDRI
+  app.get('/api/admin/hdri', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    return uploadedHdris();
+  });
+
+  app.post('/api/admin/hdri', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const file = await req.file();
+    if (!file) return reply.code(400).send({ error: 'archivo-requerido' });
+    const name = (file.filename ?? 'fondo.hdr')
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9._-]/g, '-')
+      .replace(/\.hdr$/i, '')
+      .slice(0, 56)
+      .concat('.hdr');
+    if (!HDRI_NAME.test(name)) return reply.code(400).send({ error: 'nombre-invalido' });
+    const buffer = await file.toBuffer();
+    // Magia Radiance: "#?RADIANCE" o "#?RGBE".
+    if (buffer.length < 10 || buffer.subarray(0, 2).toString('ascii') !== '#?') {
+      return reply.code(400).send({ error: 'hdr-invalido' });
+    }
+    writeFileSync(join(hdriDir, name), buffer);
+    return { ok: true, id: name, url: `/userhdri/${name}` };
+  });
+
+  app.delete('/api/admin/hdri/:file', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const file = (req.params as { file: string }).file;
+    if (!HDRI_NAME.test(file)) return reply.code(400).send({ error: 'nombre-invalido' });
+    const dest = join(hdriDir, file);
+    if (!existsSync(dest)) return reply.code(404).send({ error: 'no-existe' });
+    rmSync(dest, { force: true });
     return { ok: true };
   });
 }

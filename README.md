@@ -105,6 +105,11 @@ de entorno).
 
 ## Pipeline de assets 3D (hito 2)
 
+> 📖 **Manual completo para editar y crear sets** (Blender, Mixamo, IA,
+> empaquetado y solución de problemas): [docs/MANUAL-SETS.md](docs/MANUAL-SETS.md).
+> Nota rápida: los GLB se abren en Blender con `File > Import > glTF 2.0`,
+> no con `File > Open`.
+
 Cada **set de piezas** vive en `client/public/sets/<id>/` con un `set.json`:
 
 ```json

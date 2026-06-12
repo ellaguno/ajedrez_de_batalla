@@ -46,6 +46,27 @@ export function saveSetId(id: string): void {
   localStorage.setItem(SET_KEY, id);
 }
 
+const SOUND_KEY = 'adb.sonido';
+
+export function loadSound(): boolean {
+  return localStorage.getItem(SOUND_KEY) !== 'off';
+}
+
+export function saveSound(enabled: boolean): void {
+  localStorage.setItem(SOUND_KEY, enabled ? 'on' : 'off');
+}
+
+const BACKDROP_KEY = 'adb.fondo';
+
+/** Fondo: 'sala' (entorno 3D) o la URL de un HDRI. */
+export function loadBackdrop(): string {
+  return localStorage.getItem(BACKDROP_KEY) ?? 'sala';
+}
+
+export function saveBackdrop(value: string): void {
+  localStorage.setItem(BACKDROP_KEY, value);
+}
+
 const CINE_KEY = 'adb.cinematicas';
 
 export function loadCinematics(): boolean {

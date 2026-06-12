@@ -4,6 +4,7 @@ import type { AppliedMove } from '../types';
 import type { PieceSet, PieceType } from '../sets/types';
 import { PieceActor } from '../sets/PieceActor';
 import { classicSet } from '../sets/classic';
+import { sfx } from './audio';
 import { squareToWorld } from './board';
 import { Tweens, easeOutCubic } from './tweens';
 
@@ -86,6 +87,7 @@ export class Pieces3D {
     if (victim) {
       const near = from.clone().lerp(to, 1 - 0.62 / from.distanceTo(to));
       attacker.playLoop('walk');
+      sfx.slide();
       await this.slide(attacker, from, near, arc);
 
       const attack = attacker.has('attack')
@@ -95,17 +97,25 @@ export class Pieces3D {
           });
       const death = this.tweens
         .delay(0.3)
-        .then(() => (victim.has('die') ? victim.playOnce('die') : Promise.resolve()))
-        .then(() => this.sinkAndRemove(victim));
+        .then(() => {
+          sfx.clash();
+          return victim.has('die') ? victim.playOnce('die') : Promise.resolve();
+        })
+        .then(() => {
+          sfx.fall();
+          return this.sinkAndRemove(victim);
+        });
       await Promise.all([attack, death]);
 
       attacker.playLoop('walk');
       await this.slide(attacker, near, squareToWorld(move.to), 0);
     } else {
       attacker.playLoop('walk');
+      sfx.slide();
       await this.slide(attacker, from, squareToWorld(move.to), arc);
     }
 
+    sfx.knock();
     attacker.playLoop('idle');
     this.faceHome(attacker, move.color);
     await castling;

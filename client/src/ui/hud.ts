@@ -15,6 +15,8 @@ export interface HudActions {
   onSetChange(id: string): void;
   onSkip(): void;
   onCinematicsToggle(enabled: boolean): void;
+  onSoundToggle(enabled: boolean): void;
+  onBackdropChange(value: string): void;
 }
 
 export class Hud {
@@ -27,6 +29,8 @@ export class Hud {
   private setSelect = $<HTMLSelectElement>('set-select');
   private btnSkip = $<HTMLButtonElement>('btn-skip');
   private chkCine = $<HTMLInputElement>('chk-cine');
+  private chkSound = $<HTMLInputElement>('chk-sound');
+  private backdropSelect = $<HTMLSelectElement>('backdrop-select');
 
   constructor(actions: HudActions) {
     $('btn-new').addEventListener('click', actions.onNewGame);
@@ -36,6 +40,10 @@ export class Hud {
     this.setSelect.addEventListener('change', () => actions.onSetChange(this.setSelect.value));
     this.btnSkip.addEventListener('click', actions.onSkip);
     this.chkCine.addEventListener('change', () => actions.onCinematicsToggle(this.chkCine.checked));
+    this.chkSound.addEventListener('change', () => actions.onSoundToggle(this.chkSound.checked));
+    this.backdropSelect.addEventListener('change', () =>
+      actions.onBackdropChange(this.backdropSelect.value),
+    );
 
     // El selector de nivel solo aplica a Stockfish.
     for (const [kindId, skillId] of [
@@ -56,6 +64,25 @@ export class Hud {
 
   setCinematicsEnabled(enabled: boolean): void {
     this.chkCine.checked = enabled;
+  }
+
+  setSoundEnabled(enabled: boolean): void {
+    this.chkSound.checked = enabled;
+  }
+
+  /** Rellena el selector de fondos con los HDRI disponibles. */
+  populateBackdrops(hdris: { name: string; url: string }[], active: string): void {
+    for (const old of this.backdropSelect.querySelectorAll('option[data-hdri]')) old.remove();
+    for (const h of hdris) {
+      const opt = document.createElement('option');
+      opt.value = h.url;
+      opt.textContent = h.name;
+      opt.dataset.hdri = '1';
+      this.backdropSelect.append(opt);
+    }
+    this.backdropSelect.value = [...this.backdropSelect.options].some((o) => o.value === active)
+      ? active
+      : 'sala';
   }
 
   /** Añade los modelos LLM disponibles a los selectores de jugador. */

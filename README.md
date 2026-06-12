@@ -33,7 +33,7 @@ ajedrez_de_batalla/
 
 ```bash
 npm install        # instala dependencias y copia el motor Stockfish
-npm run dev        # web (vite, :5173 con proxy /api) + api (fastify, :3001)
+npm run dev        # web (vite, :5173 con proxy /api) + api (fastify, :8731)
 npm run build      # build de producción (client/dist + server/dist)
 npm start          # producción: el servidor sirve client/dist y la API
 
@@ -45,7 +45,7 @@ npm run test:smoke --workspace=client
 
 | Variable | Uso |
 |---|---|
-| `PORT`, `HOST` | Puerto/host de escucha (3001 / 127.0.0.1) |
+| `PORT`, `HOST` | Puerto/host de escucha (8731 / 127.0.0.1) |
 | `ADB_DB` | Ruta del SQLite (por defecto `server/data/adb.sqlite`) |
 | `BASE_URL` | URL pública para los enlaces de los correos |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `SMTP_SECURE` | Envío real de correo; sin `SMTP_HOST`, los correos se vuelcan a consola |

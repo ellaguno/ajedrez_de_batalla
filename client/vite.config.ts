@@ -6,13 +6,16 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8'))
   version: string;
 };
 
+// Puerto del servidor de la API en desarrollo (ver server/src/index.ts).
+const API = process.env.ADB_API_URL ?? 'http://localhost:8731';
+
 const apiProxy = {
-  '/api': { target: 'http://localhost:3001', ws: true },
-  '/usersets': 'http://localhost:3001',
-  '/userhdri': 'http://localhost:3001',
+  '/api': { target: API, ws: true },
+  '/usersets': API,
+  '/userhdri': API,
   // Los catálogos los genera el servidor (fusiona builtin + subidos).
-  '/sets/index.json': 'http://localhost:3001',
-  '/hdri/index.json': 'http://localhost:3001',
+  '/sets/index.json': API,
+  '/hdri/index.json': API,
 };
 
 export default defineConfig({

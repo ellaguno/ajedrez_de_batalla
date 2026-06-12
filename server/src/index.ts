@@ -43,11 +43,16 @@ if (existsSync(join(clientDist, 'index.html'))) {
   });
 }
 
-const port = Number(process.env.PORT ?? 3001);
+// Puerto poco común a propósito: 3000/3001 suelen estar ocupados por otros
+// proyectos en desarrollo (Next.js, etc.).
+const port = Number(process.env.PORT ?? 8731);
 const host = process.env.HOST ?? '127.0.0.1';
 try {
   await app.listen({ port, host });
 } catch (err) {
   app.log.error(err);
+  app.log.error(
+    `¿Puerto ${port} ocupado? Arranca con otro: PORT=8732 npm run dev (y ajusta el proxy de vite si lo cambias de forma permanente)`,
+  );
   process.exit(1);
 }

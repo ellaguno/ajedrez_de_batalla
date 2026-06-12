@@ -198,20 +198,30 @@ export class SceneManager {
     const savedTarget = this.controls.target.clone();
     this.lookTarget.copy(savedTarget);
 
-    // Encuadre: punto medio del duelo, cámara baja y perpendicular al ataque,
-    // del lado en el que ya está el espectador para no cruzar el tablero.
+    // Encuadre: el combate ocurre junto a la víctima (el atacante se detiene
+    // a ~0.6 de ella), así que se centra ahí — no en el camino recorrido,
+    // que en capturas largas dejaba el duelo fuera de cuadro.
     const from = squareToWorld(move.from);
     const victimSquare = move.flags.includes('e') ? move.to[0] + move.from[1] : move.to;
     const victim = squareToWorld(victimSquare);
     const dir = victim.clone().sub(from).normalize();
+    const duelCenter = victim.clone().sub(dir.clone().multiplyScalar(0.31));
+
+    // Cámara perpendicular al ataque, del lado del espectador…
     const perp = new THREE.Vector3(dir.z, 0, -dir.x);
     if (perp.dot(savedPos.clone().sub(victim)) < 0) perp.negate();
-    const mid = from.clone().lerp(victim, 0.65);
-    const duelPos = mid
+    // …y en la orilla, sesgada hacia fuera del tablero para no quedar
+    // encajonada entre las piezas y mantener el duelo bien centrado.
+    const camDir = perp.clone();
+    const outward = duelCenter.clone().setY(0);
+    if (outward.lengthSq() > 4) {
+      camDir.multiplyScalar(0.75).add(outward.normalize().multiplyScalar(0.55)).normalize();
+    }
+    const duelPos = duelCenter
       .clone()
-      .add(perp.multiplyScalar(2.4))
-      .add(new THREE.Vector3(0, 1.35, 0));
-    const duelLook = mid.clone().setY(0.4);
+      .add(camDir.multiplyScalar(2.5))
+      .add(new THREE.Vector3(0, 1.4, 0));
+    const duelLook = duelCenter.clone().setY(0.35);
 
     // Vuelo de entrada.
     const p0 = savedPos.clone();

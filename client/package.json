@@ -1,0 +1,25 @@
+{
+  "name": "@adb/client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test:smoke": "node tests/run-smoke.mjs",
+    "generate:set": "node scripts/generate-set.mjs",
+    "postinstall": "node scripts/copy-engine.mjs"
+  },
+  "dependencies": {
+    "chess.js": "^1.0.0",
+    "stockfish": "^18.0.7",
+    "three": "^0.165.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.165.0",
+    "playwright-core": "^1.45.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0"
+  }
+}

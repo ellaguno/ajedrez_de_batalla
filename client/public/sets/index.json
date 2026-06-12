@@ -1,0 +1,14 @@
+{
+  "sets": [
+    {
+      "id": "guerreros",
+      "name": "Guerreros Geométricos",
+      "dir": "guerreros"
+    },
+    {
+      "id": "clasico",
+      "name": "Clásico (sin animación)",
+      "builtin": true
+    }
+  ]
+}

@@ -1,0 +1,388 @@
+:root {
+  --bg: #f2ede4;
+  --panel: #ffffffcc;
+  --text: #1d1c1a;
+  --muted: #6b675f;
+  --accent: #b3541e;
+  --accent-text: #ffffff;
+  --border: #00000022;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+[data-theme='dark'] {
+  --bg: #15161a;
+  --panel: #20222acc;
+  --text: #e8e6e1;
+  --muted: #9a968d;
+  --accent: #d98e4a;
+  --accent-text: #1d1c1a;
+  --border: #ffffff22;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Los selectores por id de overlays ganan al [hidden] del navegador. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#app {
+  position: relative;
+  height: 100%;
+}
+
+#scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+#topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--border);
+}
+
+#topbar h1 {
+  font-size: 18px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+#status {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.spacer {
+  flex: 1;
+}
+
+#panel {
+  position: absolute;
+  top: 56px;
+  right: 12px;
+  bottom: 12px;
+  width: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.panel-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.set-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.set-row select {
+  font: inherit;
+  font-size: 13px;
+  padding: 5px;
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+#btn-skip {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  font-size: 15px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+}
+
+#btn-skip kbd {
+  font-size: 11px;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+#players {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: pre-line;
+}
+
+#moves {
+  flex: 1;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 0 0 28px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+#moves li {
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+#moves li span {
+  display: inline-block;
+  min-width: 52px;
+}
+
+button {
+  font: inherit;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button.primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: transparent;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+dialog {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px 24px;
+  min-width: 320px;
+}
+
+dialog::backdrop {
+  background: #000a;
+}
+
+dialog h2 {
+  margin: 0 0 14px;
+  font-size: 17px;
+}
+
+.cfg-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 100px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.cfg-row select {
+  font: inherit;
+  padding: 5px;
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.dlg-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.dlg-buttons.promote {
+  justify-content: center;
+  margin-top: 0;
+}
+
+.dlg-buttons.promote button {
+  font-size: 17px;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tab {
+  flex: 1;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+#auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 300px;
+}
+
+#auth-form input {
+  font: inherit;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+}
+
+#auth-msg {
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+#auth-msg.error {
+  color: #e5533d;
+  border-color: #e5533d66;
+}
+
+#games-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 420px;
+  max-height: 50vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#games-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+#games-list li.empty {
+  justify-content: center;
+  color: var(--muted);
+  border-style: dashed;
+}
+
+#games-list .game-info {
+  flex: 1;
+  min-width: 0;
+}
+
+#games-list .game-name {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#games-list .game-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#games-list button {
+  font-size: 12px;
+  padding: 5px 9px;
+}
+
+#replay-bar {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+#rp-pos {
+  min-width: 64px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+#banner {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 18px 34px;
+  font-size: 24px;
+  font-weight: 600;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  #panel {
+    display: none;
+  }
+}

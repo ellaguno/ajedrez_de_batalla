@@ -1,0 +1,145 @@
+import type { Move } from 'chess.js';
+import type { GameConfig, PlayerConfig } from '../types';
+
+function $<T extends HTMLElement>(id: string): T {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`Falta el elemento #${id}`);
+  return el as T;
+}
+
+export interface HudActions {
+  onNewGame(): void;
+  onUndo(): void;
+  onFlip(): void;
+  onToggleTheme(): void;
+  onSetChange(id: string): void;
+  onSkip(): void;
+  onCinematicsToggle(enabled: boolean): void;
+}
+
+export class Hud {
+  private status = $<HTMLDivElement>('status');
+  private players = $<HTMLDivElement>('players');
+  private moves = $<HTMLOListElement>('moves');
+  private banner = $<HTMLDivElement>('banner');
+  private dlgNew = $<HTMLDialogElement>('dlg-new');
+  private dlgPromote = $<HTMLDialogElement>('dlg-promote');
+  private setSelect = $<HTMLSelectElement>('set-select');
+  private btnSkip = $<HTMLButtonElement>('btn-skip');
+  private chkCine = $<HTMLInputElement>('chk-cine');
+
+  constructor(actions: HudActions) {
+    $('btn-new').addEventListener('click', actions.onNewGame);
+    $('btn-undo').addEventListener('click', actions.onUndo);
+    $('btn-flip').addEventListener('click', actions.onFlip);
+    $('btn-theme').addEventListener('click', actions.onToggleTheme);
+    this.setSelect.addEventListener('change', () => actions.onSetChange(this.setSelect.value));
+    this.btnSkip.addEventListener('click', actions.onSkip);
+    this.chkCine.addEventListener('change', () => actions.onCinematicsToggle(this.chkCine.checked));
+  }
+
+  setCinematicActive(active: boolean): void {
+    this.btnSkip.hidden = !active;
+  }
+
+  setCinematicsEnabled(enabled: boolean): void {
+    this.chkCine.checked = enabled;
+  }
+
+  populateSets(sets: { id: string; name: string }[], activeId: string): void {
+    this.setSelect.replaceChildren(
+      ...sets.map((s) => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        return opt;
+      }),
+    );
+    this.setSelect.value = activeId;
+  }
+
+  /** Refleja el set realmente activo (p. ej. tras un fallback). */
+  markActiveSet(id: string): void {
+    this.setSelect.value = id;
+  }
+
+  setStatus(text: string): void {
+    this.status.textContent = text;
+  }
+
+  setPlayers(config: GameConfig): void {
+    const desc = (p: PlayerConfig) =>
+      p.kind === 'human' ? 'Humano' : `Stockfish nivel ${p.skill ?? 5}`;
+    this.players.textContent = `Blancas: ${desc(config.white)}\nNegras: ${desc(config.black)}`;
+  }
+
+  setMoves(history: Move[]): void {
+    this.moves.replaceChildren();
+    for (let i = 0; i < history.length; i += 2) {
+      const li = document.createElement('li');
+      const white = document.createElement('span');
+      white.textContent = history[i].san;
+      li.append(white);
+      if (history[i + 1]) {
+        const black = document.createElement('span');
+        black.textContent = history[i + 1].san;
+        li.append(black);
+      }
+      this.moves.append(li);
+    }
+    this.moves.scrollTop = this.moves.scrollHeight;
+  }
+
+  showBanner(text: string): void {
+    this.banner.textContent = text;
+    this.banner.hidden = false;
+  }
+
+  hideBanner(): void {
+    this.banner.hidden = true;
+  }
+
+  /** Diálogo de nueva partida; null si se cancela. */
+  askNewGame(): Promise<GameConfig | null> {
+    return new Promise((resolve) => {
+      const onClose = () => {
+        this.dlgNew.removeEventListener('close', onClose);
+        if (this.dlgNew.returnValue !== 'ok') {
+          resolve(null);
+          return;
+        }
+        const read = (kindId: string, skillId: string): PlayerConfig => {
+          const kind = $<HTMLSelectElement>(kindId).value as PlayerConfig['kind'];
+          return kind === 'engine'
+            ? { kind, skill: Number($<HTMLSelectElement>(skillId).value) }
+            : { kind };
+        };
+        resolve({
+          white: read('cfg-white', 'cfg-white-skill'),
+          black: read('cfg-black', 'cfg-black-skill'),
+        });
+      };
+      this.dlgNew.addEventListener('close', onClose);
+      this.dlgNew.showModal();
+    });
+  }
+
+  /** Selector de pieza de promoción; nunca se cancela (Escape = dama). */
+  askPromotion(): Promise<string> {
+    return new Promise((resolve) => {
+      const buttons = this.dlgPromote.querySelectorAll<HTMLButtonElement>('button[data-piece]');
+      const done = (piece: string) => {
+        for (const b of buttons) b.onclick = null;
+        this.dlgPromote.removeEventListener('close', onClose);
+        if (this.dlgPromote.open) this.dlgPromote.close();
+        resolve(piece);
+      };
+      const onClose = () => done('q');
+      for (const b of buttons) {
+        b.onclick = () => done(b.dataset.piece!);
+      }
+      this.dlgPromote.addEventListener('close', onClose);
+      this.dlgPromote.showModal();
+    });
+  }
+}

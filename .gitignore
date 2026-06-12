@@ -1,0 +1,11 @@
+node_modules/
+dist/
+# Generado por client/scripts/copy-engine.mjs en postinstall
+client/public/engine/
+# Base de datos local del servidor
+server/data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.log
+.DS_Store

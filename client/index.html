@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♞</text></svg>" />
+    <title>Ajedrez de Batalla</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+
+      <header id="topbar">
+        <h1>♞ Ajedrez de Batalla</h1>
+        <div id="status" aria-live="polite">—</div>
+        <div class="spacer"></div>
+        <button id="btn-games" hidden>Mis partidas</button>
+        <button id="btn-user">Entrar</button>
+        <button id="btn-theme" title="Tema claro/oscuro">🌓</button>
+      </header>
+
+      <aside id="panel">
+        <div class="panel-buttons">
+          <button id="btn-new" class="primary">Nueva partida</button>
+          <button id="btn-undo">Deshacer</button>
+          <button id="btn-flip">Girar vista</button>
+        </div>
+        <label class="set-row">
+          Set de piezas
+          <select id="set-select"></select>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="chk-cine" checked />
+          Combate cinematográfico
+        </label>
+        <div id="players">—</div>
+        <ol id="moves"></ol>
+      </aside>
+
+      <dialog id="dlg-new">
+        <form method="dialog">
+          <h2>Nueva partida</h2>
+          <div class="cfg-row">
+            <label>Blancas</label>
+            <select id="cfg-white">
+              <option value="human">Humano</option>
+              <option value="engine">IA (Stockfish)</option>
+            </select>
+            <select id="cfg-white-skill" class="skill">
+              <option value="1">Nivel 1</option>
+              <option value="3">Nivel 3</option>
+              <option value="5" selected>Nivel 5</option>
+              <option value="10">Nivel 10</option>
+              <option value="15">Nivel 15</option>
+              <option value="20">Nivel 20</option>
+            </select>
+          </div>
+          <div class="cfg-row">
+            <label>Negras</label>
+            <select id="cfg-black">
+              <option value="human">Humano</option>
+              <option value="engine" selected>IA (Stockfish)</option>
+            </select>
+            <select id="cfg-black-skill" class="skill">
+              <option value="1">Nivel 1</option>
+              <option value="3">Nivel 3</option>
+              <option value="5" selected>Nivel 5</option>
+              <option value="10">Nivel 10</option>
+              <option value="15">Nivel 15</option>
+              <option value="20">Nivel 20</option>
+            </select>
+          </div>
+          <div class="dlg-buttons">
+            <button value="cancel">Cancelar</button>
+            <button value="ok" class="primary" id="btn-start">Empezar</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="dlg-promote">
+        <h2>Promocionar a…</h2>
+        <div class="dlg-buttons promote">
+          <button data-piece="q">♛ Dama</button>
+          <button data-piece="r">♜ Torre</button>
+          <button data-piece="b">♝ Alfil</button>
+          <button data-piece="n">♞ Caballo</button>
+        </div>
+      </dialog>
+
+      <dialog id="dlg-auth">
+        <div class="auth-tabs">
+          <button id="tab-login" class="tab active">Entrar</button>
+          <button id="tab-register" class="tab">Crear cuenta</button>
+        </div>
+        <form id="auth-form">
+          <input id="auth-name" type="text" placeholder="Nombre (opcional)" autocomplete="name" hidden />
+          <input id="auth-email" type="email" placeholder="Correo electrónico" autocomplete="email" required />
+          <input id="auth-pass" type="password" placeholder="Contraseña (mín. 8)" autocomplete="current-password" minlength="8" required />
+          <div id="auth-msg" hidden></div>
+          <div class="dlg-buttons">
+            <button type="button" id="auth-resend" hidden>Reenviar correo</button>
+            <button type="button" id="auth-cancel">Cancelar</button>
+            <button type="submit" class="primary" id="auth-submit">Entrar</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="dlg-profile">
+        <h2 id="profile-email">—</h2>
+        <div class="dlg-buttons">
+          <button id="profile-close">Cerrar</button>
+          <button id="profile-logout" class="primary">Cerrar sesión</button>
+        </div>
+      </dialog>
+
+      <dialog id="dlg-games">
+        <h2>Mis partidas</h2>
+        <ul id="games-list"><li class="empty">Cargando…</li></ul>
+        <div class="dlg-buttons">
+          <button id="games-close">Cerrar</button>
+        </div>
+      </dialog>
+
+      <div id="replay-bar" hidden>
+        <button id="rp-start" title="Al inicio">⏮</button>
+        <button id="rp-prev" title="Anterior">◀</button>
+        <span id="rp-pos">0 / 0</span>
+        <button id="rp-next" title="Siguiente">▶</button>
+        <button id="rp-end" title="Al final">⏭</button>
+        <button id="rp-exit">Salir de repetición</button>
+      </div>
+
+      <div id="banner" hidden></div>
+      <button id="btn-skip" hidden>Saltar combate ⏭ <kbd>Esc</kbd></button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

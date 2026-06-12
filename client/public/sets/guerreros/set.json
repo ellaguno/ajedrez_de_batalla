@@ -1,0 +1,42 @@
+{
+  "format": 1,
+  "id": "guerreros",
+  "name": "Guerreros Geométricos",
+  "pieces": {
+    "p": {
+      "model": "pawn.glb"
+    },
+    "r": {
+      "model": "rook.glb"
+    },
+    "n": {
+      "model": "knight.glb"
+    },
+    "b": {
+      "model": "bishop.glb"
+    },
+    "q": {
+      "model": "queen.glb"
+    },
+    "k": {
+      "model": "king.glb"
+    }
+  },
+  "clips": {
+    "idle": "idle",
+    "walk": "walk",
+    "attack": "attack",
+    "die": "die",
+    "win": "win"
+  },
+  "colors": {
+    "w": "#e8dfc8",
+    "b": "#3a3531"
+  },
+  "scale": 1,
+  "board": {
+    "light": "#d8c79e",
+    "dark": "#6e4a2f",
+    "frame": "#3b2b1d"
+  }
+}

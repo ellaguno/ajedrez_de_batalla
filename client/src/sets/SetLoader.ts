@@ -6,16 +6,23 @@ import { PieceActor } from './PieceActor';
 import { classicSet } from './classic';
 import type { PieceSet, PieceSetInfo, PieceType, SetManifest } from './types';
 
+/** Sets de fábrica, por si el catálogo del servidor no está disponible. */
+const FALLBACK_SETS: PieceSetInfo[] = [
+  { id: 'guerreros', name: 'Guerreros Geométricos', dir: 'guerreros' },
+  { id: 'clasico', name: 'Clásico (sin animación)', builtin: true },
+];
+
 export async function listSets(): Promise<PieceSetInfo[]> {
   try {
     const r = await fetch('/sets/index.json');
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = (await r.json()) as { sets: PieceSetInfo[] };
     if (Array.isArray(data.sets) && data.sets.length > 0) return data.sets;
+    console.warn('Catálogo de sets vacío; se usan los sets de fábrica');
   } catch (err) {
-    console.warn('No se pudo leer /sets/index.json; solo set clásico', err);
+    console.warn('No se pudo leer /sets/index.json; se usan los sets de fábrica', err);
   }
-  return [{ id: 'clasico', name: 'Clásico (sin animación)', builtin: true }];
+  return FALLBACK_SETS;
 }
 
 export async function loadSet(info: PieceSetInfo): Promise<PieceSet> {

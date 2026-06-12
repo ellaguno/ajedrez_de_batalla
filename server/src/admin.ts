@@ -88,13 +88,21 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     decorateReply: false,
   });
 
-  // Catálogo dinámico: sets de fábrica (dist) + sets subidos.
+  // Catálogo dinámico: sets de fábrica (dist o, en dev sin build, las
+  // fuentes en client/public) + sets subidos por el administrador.
   app.get('/sets/index.json', async () => {
     let builtin: { sets: unknown[] } = { sets: [] };
-    try {
-      builtin = JSON.parse(readFileSync(join(clientDist, 'sets', 'index.json'), 'utf8'));
-    } catch {
-      /* sin build del cliente (dev puro): solo sets subidos */
+    const candidates = [
+      join(clientDist, 'sets', 'index.json'),
+      join(here, '..', '..', 'client', 'public', 'sets', 'index.json'),
+    ];
+    for (const path of candidates) {
+      try {
+        builtin = JSON.parse(readFileSync(path, 'utf8'));
+        break;
+      } catch {
+        /* probar la siguiente ruta */
+      }
     }
     return { sets: [...builtin.sets, ...uploadedSets()] };
   });

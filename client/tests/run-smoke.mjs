@@ -35,7 +35,14 @@ async function waitForServer() {
   throw new Error('el servidor no levantó');
 }
 
-const TESTS = ['smoke-api.mjs', 'smoke.mjs', 'smoke-human.mjs', 'smoke-capture.mjs', 'smoke-account.mjs'];
+const TESTS = [
+  'smoke-api.mjs',
+  'smoke.mjs',
+  'smoke-human.mjs',
+  'smoke-capture.mjs',
+  'smoke-account.mjs',
+  'smoke-llm.mjs',
+];
 
 let failed = false;
 try {

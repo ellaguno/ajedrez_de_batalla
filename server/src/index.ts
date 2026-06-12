@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { authRoutes } from './auth.js';
 import { gameRoutes } from './games.js';
+import { llmRoutes, seedLlmModels } from './llm.js';
 import { devMails } from './mailer.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -17,6 +18,8 @@ app.get('/api/health', async () => ({ ok: true }));
 
 authRoutes(app);
 gameRoutes(app);
+seedLlmModels();
+llmRoutes(app);
 
 // Endpoints solo-desarrollo (los usan las pruebas para leer el correo simulado).
 if (process.env.ADB_DEV === '1') {

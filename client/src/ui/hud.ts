@@ -36,6 +36,18 @@ export class Hud {
     this.setSelect.addEventListener('change', () => actions.onSetChange(this.setSelect.value));
     this.btnSkip.addEventListener('click', actions.onSkip);
     this.chkCine.addEventListener('change', () => actions.onCinematicsToggle(this.chkCine.checked));
+
+    // El selector de nivel solo aplica a Stockfish.
+    for (const [kindId, skillId] of [
+      ['cfg-white', 'cfg-white-skill'],
+      ['cfg-black', 'cfg-black-skill'],
+    ]) {
+      const kind = $<HTMLSelectElement>(kindId);
+      kind.addEventListener('change', () => {
+        $<HTMLSelectElement>(skillId).style.visibility =
+          kind.value === 'engine' ? 'visible' : 'hidden';
+      });
+    }
   }
 
   setCinematicActive(active: boolean): void {
@@ -44,6 +56,21 @@ export class Hud {
 
   setCinematicsEnabled(enabled: boolean): void {
     this.chkCine.checked = enabled;
+  }
+
+  /** Añade los modelos LLM disponibles a los selectores de jugador. */
+  populateLlmModels(models: { id: number; name: string }[]): void {
+    for (const selectId of ['cfg-white', 'cfg-black']) {
+      const select = $<HTMLSelectElement>(selectId);
+      for (const old of select.querySelectorAll('option[data-llm]')) old.remove();
+      for (const m of models) {
+        const opt = document.createElement('option');
+        opt.value = `llm:${m.id}`;
+        opt.textContent = `IA: ${m.name}`;
+        opt.dataset.llm = '1';
+        select.append(opt);
+      }
+    }
   }
 
   populateSets(sets: { id: string; name: string }[], activeId: string): void {
@@ -68,8 +95,11 @@ export class Hud {
   }
 
   setPlayers(config: GameConfig): void {
-    const desc = (p: PlayerConfig) =>
-      p.kind === 'human' ? 'Humano' : `Stockfish nivel ${p.skill ?? 5}`;
+    const desc = (p: PlayerConfig) => {
+      if (p.kind === 'human') return 'Humano';
+      if (p.kind === 'llm') return p.label ?? 'IA (LLM)';
+      return `Stockfish nivel ${p.skill ?? 5}`;
+    };
     this.players.textContent = `Blancas: ${desc(config.white)}\nNegras: ${desc(config.black)}`;
   }
 
@@ -109,10 +139,19 @@ export class Hud {
           return;
         }
         const read = (kindId: string, skillId: string): PlayerConfig => {
-          const kind = $<HTMLSelectElement>(kindId).value as PlayerConfig['kind'];
-          return kind === 'engine'
-            ? { kind, skill: Number($<HTMLSelectElement>(skillId).value) }
-            : { kind };
+          const select = $<HTMLSelectElement>(kindId);
+          const value = select.value;
+          if (value === 'engine') {
+            return { kind: 'engine', skill: Number($<HTMLSelectElement>(skillId).value) };
+          }
+          if (value.startsWith('llm:')) {
+            return {
+              kind: 'llm',
+              modelId: Number(value.slice(4)),
+              label: select.selectedOptions[0]?.textContent?.replace(/^IA: /, '') ?? 'LLM',
+            };
+          }
+          return { kind: 'human' };
         };
         resolve({
           white: read('cfg-white', 'cfg-white-skill'),

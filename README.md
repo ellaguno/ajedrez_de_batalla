@@ -49,7 +49,15 @@ npm run test:smoke --workspace=client
 | `ADB_DB` | Ruta del SQLite (por defecto `server/data/adb.sqlite`) |
 | `BASE_URL` | URL pública para los enlaces de los correos |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `SMTP_SECURE` | Envío real de correo; sin `SMTP_HOST`, los correos se vuelcan a consola |
-| `ADB_DEV=1` | Endpoints de desarrollo (`/api/dev/mails`, lo usan las pruebas) |
+| `ADB_DEV=1` | Endpoints de desarrollo (`/api/dev/mails`) y modelo LLM de prueba; lo usan las pruebas |
+| `ANTHROPIC_API_KEY` (+`ANTHROPIC_MODEL`) | Jugador Claude directo (por defecto `claude-opus-4-8`) |
+| `OPENAI_API_KEY` (+`OPENAI_MODEL`) | Jugador OpenAI directo (por defecto `gpt-4o-mini`) |
+| `DEEPSEEK_API_KEY` (+`DEEPSEEK_MODEL`) | Jugador DeepSeek directo (por defecto `deepseek-chat`) |
+| `OPENROUTER_API_KEY` + `OPENROUTER_MODELS` | Cualquier otra IA vía OpenRouter; ids separados por coma, p. ej. `qwen/qwen3-32b,x-ai/grok-4` |
+
+Los modelos se siembran en la tabla `llm_models` al arrancar el servidor
+(el panel de administración del hito 7 permitirá gestionarlos sin variables
+de entorno).
 
 ## Hoja de ruta
 
@@ -74,9 +82,14 @@ npm run test:smoke --workspace=client
   cinemáticas) o borrarla.
 - [ ] **Hito 5 — Juego en línea**: persona contra persona vía WebSockets, el servidor
   como árbitro (valida jugadas con la misma lógica chess.js).
-- [ ] **Hito 6 — IAs LLM**: jugadores LLM configurables (Qwen, DeepSeek, Claude, etc.)
-  vía API, modo LLM contra LLM, prompts con FEN + historial y validación de jugadas
-  ilegales con reintento.
+- [x] **Hito 6 — IAs LLM**: jugadores LLM en el diálogo de nueva partida, en
+  cualquier combinación (humano/Stockfish/LLM contra humano/Stockfish/LLM).
+  Proveedores directos: **Claude** (SDK Anthropic), **OpenAI** y **DeepSeek**;
+  cualquier otro modelo vía **OpenRouter** (`OPENROUTER_MODELS`). Las claves API
+  viven solo en el servidor; cada jugada se pide con FEN + historial + jugadas
+  legales, se valida con chess.js y se reintenta con feedback ante jugadas
+  ilegales (con jugada aleatoria como último recurso para no colgar la partida).
+  Requiere sesión iniciada.
 - [ ] **Hito 7 — Administración**: panel admin para API keys, configurar IAs
   disponibles y subir nuevos sets de assets.
 

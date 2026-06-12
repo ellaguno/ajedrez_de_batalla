@@ -2,6 +2,7 @@ import { Chess } from 'chess.js';
 import type { Move, Square, Color } from 'chess.js';
 import { EnginePlayer } from './engine';
 import { piecesOf } from './util';
+import { llm } from '../api';
 import type { AppliedMove, GameConfig, GameOverInfo, PlayerConfig } from '../types';
 
 export interface GameEvents {
@@ -12,6 +13,8 @@ export interface GameEvents {
   /** Cualquier cambio de estado: turno, lista de jugadas, guardado. */
   onStateChanged(): void;
   onGameOver(info: GameOverInfo): void;
+  /** Un jugador automático (motor o LLM) no pudo mover; la partida queda en pausa. */
+  onAutoPlayerError(message: string): void;
 }
 
 export class GameController {
@@ -98,13 +101,13 @@ export class GameController {
   /** Deshacer (solo si juega al menos un humano). Retrocede hasta dejar al humano al turno. */
   undo(): void {
     if (this.busy) return;
-    if (this.config.white.kind === 'engine' && this.config.black.kind === 'engine') return;
+    if (this.config.white.kind !== 'human' && this.config.black.kind !== 'human') return;
     if (this.chess.history().length === 0) return;
 
     this.generation++;
     this.chess.undo();
-    // Si ahora le toca al motor (deshicimos su respuesta), quita también la jugada humana.
-    while (this.chess.history().length > 0 && this.playerFor(this.turn).kind === 'engine') {
+    // Si ahora le toca a la IA (deshicimos su respuesta), quita también la jugada humana.
+    while (this.chess.history().length > 0 && this.playerFor(this.turn).kind !== 'human') {
       this.chess.undo();
     }
     this.events.onPositionReset();
@@ -149,18 +152,26 @@ export class GameController {
     while (gen === this.generation && !this.chess.isGameOver()) {
       const color = this.turn;
       const player = this.playerFor(color);
-      if (player.kind !== 'engine') return;
+      if (player.kind === 'human') return;
 
       this.busy = true;
       try {
-        const engine = await this.engineFor(color, player.skill ?? 5);
-        const skill = player.skill ?? 5;
-        const mv = await engine.bestMove(this.chess.fen(), 200 + skill * 40);
+        const mv =
+          player.kind === 'engine'
+            ? await this.engineMove(color, player)
+            : await this.llmMove(player);
         if (gen !== this.generation) return;
         this.busy = false;
         await this.applyMove(mv.from as Square, mv.to as Square, mv.promotion);
       } catch (err) {
-        console.error('Fallo del motor', err);
+        console.error('Fallo del jugador automático', err);
+        if (gen === this.generation) {
+          this.events.onAutoPlayerError(
+            player.kind === 'llm'
+              ? `La IA "${player.label ?? 'LLM'}" no pudo mover. ¿Hay sesión iniciada y clave API configurada?`
+              : 'El motor de ajedrez falló.',
+          );
+        }
         return;
       } finally {
         this.busy = false;
@@ -168,6 +179,22 @@ export class GameController {
       // Pausa breve entre jugadas para que IA vs IA sea seguible.
       await new Promise((r) => setTimeout(r, 250));
     }
+  }
+
+  private async engineMove(
+    color: Color,
+    player: PlayerConfig,
+  ): Promise<{ from: string; to: string; promotion?: string }> {
+    const skill = player.skill ?? 5;
+    const engine = await this.engineFor(color, skill);
+    return engine.bestMove(this.chess.fen(), 200 + skill * 40);
+  }
+
+  private async llmMove(
+    player: PlayerConfig,
+  ): Promise<{ from: string; to: string; promotion?: string }> {
+    if (player.modelId === undefined) throw new Error('Jugador LLM sin modelo configurado');
+    return llm.move(player.modelId, this.chess.fen(), this.chess.history());
   }
 
   private async engineFor(color: Color, skill: number): Promise<EnginePlayer> {

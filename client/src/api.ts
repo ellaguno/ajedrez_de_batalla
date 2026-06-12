@@ -70,6 +70,27 @@ export const auth = {
     call<{ ok: boolean }>('POST', '/auth/resend', { email, password }),
 };
 
+export interface LlmModelInfo {
+  id: number;
+  name: string;
+}
+
+export interface LlmMove {
+  san: string;
+  from: string;
+  to: string;
+  promotion?: string;
+  attempts: number;
+  /** true si el modelo no dio jugada legal y se usó una aleatoria. */
+  fallback?: boolean;
+}
+
+export const llm = {
+  models: () => call<LlmModelInfo[]>('GET', '/llm/models'),
+  move: (modelId: number, fen: string, history: string[]) =>
+    call<LlmMove>('POST', '/llm/move', { modelId, fen, history }),
+};
+
 export const games = {
   list: () => call<GameSummary[]>('GET', '/games'),
   create: (payload: GamePayload) => call<{ id: number }>('POST', '/games', payload),

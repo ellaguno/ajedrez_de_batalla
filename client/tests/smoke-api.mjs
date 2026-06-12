@@ -90,6 +90,24 @@ const del = await api('DELETE', `/api/games/${id}`);
 const after = await api('GET', '/api/games');
 check('borrar partida', del.status === 200 && !after.data?.some((g) => g.id === id));
 
+// Jugadores LLM (modelo mock sembrado con ADB_DEV=1)
+const models = await api('GET', '/api/llm/models');
+const mock = models.data?.find((m) => m.name.includes('mock'));
+check('lista de modelos LLM incluye el mock (dev)', models.status === 200 && !!mock);
+
+const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const mv = await api('POST', '/api/llm/move', { modelId: mock.id, fen: START_FEN, history: [] });
+check(
+  'jugada LLM válida con from/to/san',
+  mv.status === 200 && typeof mv.data?.san === 'string' && !!mv.data?.from && !!mv.data?.to,
+);
+
+const noSession = cookie;
+cookie = '';
+const mvDenied = await api('POST', '/api/llm/move', { modelId: mock.id, fen: START_FEN });
+check('jugada LLM exige sesión', mvDenied.status === 401);
+cookie = noSession;
+
 // Logout invalida la sesión
 await api('POST', '/api/auth/logout', {});
 const meAfter = await api('GET', '/api/auth/me');

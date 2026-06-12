@@ -50,6 +50,17 @@ CREATE TABLE IF NOT EXISTS games (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS llm_models (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  provider TEXT NOT NULL,
+  base_url TEXT,
+  model TEXT NOT NULL,
+  api_key TEXT,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_games_user ON games(user_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 `);
@@ -60,6 +71,16 @@ export interface UserRow {
   name: string | null;
   pass_hash: string;
   verified: number;
+}
+
+export interface LlmModelRow {
+  id: number;
+  name: string;
+  provider: 'openai' | 'anthropic' | 'mock';
+  base_url: string | null;
+  model: string;
+  api_key: string | null;
+  enabled: number;
 }
 
 export interface GameRow {

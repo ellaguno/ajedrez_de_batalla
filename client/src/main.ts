@@ -78,8 +78,8 @@ function statusText(): string {
   const color = controller.turn === 'w' ? 'blancas' : 'negras';
   const player = controller.playerFor(controller.turn);
   const check = controller.chess.isCheck() ? ' — ¡jaque!' : '';
-  return player.kind === 'engine'
-    ? `Turno: ${color} (IA pensando…)${check}`
+  return player.kind !== 'human'
+    ? `Turno: ${color} (${playerDesc(player)} pensando…)${check}`
     : `Turno: ${color}${check}`;
 }
 
@@ -101,7 +101,9 @@ function gameOverText(info: GameOverInfo): string {
 }
 
 function playerDesc(p: PlayerConfig): string {
-  return p.kind === 'human' ? 'Humano' : `Stockfish ${p.skill ?? 5}`;
+  if (p.kind === 'human') return 'Humano';
+  if (p.kind === 'llm') return p.label ?? 'IA LLM';
+  return `Stockfish ${p.skill ?? 5}`;
 }
 
 function makeGameName(config: GameConfig): string {
@@ -183,6 +185,11 @@ const controller = new GameController({
   onGameOver(info: GameOverInfo) {
     if (replay) return;
     hud.showBanner(gameOverText(info));
+  },
+  onAutoPlayerError(message: string) {
+    if (replay) return;
+    hud.showBanner(message);
+    hud.setStatus('Partida en pausa');
   },
 });
 
@@ -405,6 +412,11 @@ let appReady = false;
 
 async function start(): Promise<void> {
   await authUi.init();
+  try {
+    hud.populateLlmModels(await api.llm.models());
+  } catch (err) {
+    console.warn('No se pudieron cargar los modelos LLM', err);
+  }
   availableSets = await listSets();
   hud.populateSets(availableSets, activeSetId);
   await applySetById(activeSetId);

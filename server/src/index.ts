@@ -2,9 +2,33 @@ import './env.js'; // primero: carga .env antes de que otros módulos lean proce
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// Carga sencilla de .env (sin dependencia externa). Busca primero en
+// server/.env y luego en la raíz del repo. Las variables ya presentes en
+// process.env tienen prioridad (entorno real > archivo).
+const hereForEnv = dirname(fileURLToPath(import.meta.url));
+for (const candidate of [
+  join(hereForEnv, '..', '.env'),
+  join(hereForEnv, '..', '..', '.env'),
+]) {
+  if (!existsSync(candidate)) continue;
+  for (const rawLine of readFileSync(candidate, 'utf8').split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const eq = line.indexOf('=');
+    if (eq < 0) continue;
+    const key = line.slice(0, eq).trim();
+    let val = line.slice(eq + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    if (process.env[key] === undefined) process.env[key] = val;
+  }
+}
+
 import { authRoutes } from './auth.js';
 import { gameRoutes } from './games.js';
 import { adminRoutes } from './admin.js';

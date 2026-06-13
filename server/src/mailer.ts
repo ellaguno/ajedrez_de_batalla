@@ -7,16 +7,25 @@ import type { Transporter } from 'nodemailer';
  * las pruebas para extraer el enlace de verificación).
  */
 let transport: Transporter | null = null;
+let transportInit = false;
 
-if (process.env.SMTP_HOST) {
-  transport = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: process.env.SMTP_SECURE === '1',
-    auth: process.env.SMTP_USER
-      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      : undefined,
-  });
+function getTransport(): Transporter | null {
+  // Inicialización perezosa: el .env se carga al arrancar (index.ts) y los
+  // imports ESM se hoist antes del cuerpo, así que no podemos leer SMTP_HOST
+  // en el top-level del módulo.
+  if (transportInit) return transport;
+  transportInit = true;
+  if (process.env.SMTP_HOST) {
+    transport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT ?? 587),
+      secure: process.env.SMTP_SECURE === '1',
+      auth: process.env.SMTP_USER
+        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+        : undefined,
+    });
+  }
+  return transport;
 }
 
 export interface DevMail {
@@ -29,8 +38,9 @@ export interface DevMail {
 const devOutbox: DevMail[] = [];
 
 export async function sendMail(to: string, subject: string, text: string): Promise<void> {
-  if (transport) {
-    await transport.sendMail({
+  const tx = getTransport();
+  if (tx) {
+    await tx.sendMail({
       from: process.env.SMTP_FROM ?? 'Ajedrez de Batalla <no-reply@localhost>',
       to,
       subject,

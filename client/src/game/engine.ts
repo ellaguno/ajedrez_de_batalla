@@ -15,12 +15,13 @@ type LineListener = (line: string) => boolean;
 let manifestPromise: Promise<string> | null = null;
 
 async function engineUrl(): Promise<string> {
-  manifestPromise ??= fetch('/engine/manifest.json')
+  const base = import.meta.env.BASE_URL;
+  manifestPromise ??= fetch(`${base}engine/manifest.json`)
     .then((r) => {
       if (!r.ok) throw new Error(`manifest.json: HTTP ${r.status}`);
       return r.json();
     })
-    .then((m: { js: string }) => `/engine/${m.js}`);
+    .then((m: { js: string }) => `${base}engine/${m.js}`);
   return manifestPromise;
 }
 

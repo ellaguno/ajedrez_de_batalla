@@ -40,7 +40,7 @@ export class ApiError extends Error {
 }
 
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`${import.meta.env.BASE_URL}api${path}`, {
     method,
     credentials: 'same-origin',
     // Sin body no se manda content-type: Fastify rechaza JSON vacío.
@@ -161,7 +161,7 @@ export const admin = {
   async setUpload(file: File): Promise<{ ok: boolean; id: string }> {
     const form = new FormData();
     form.append('archivo', file);
-    const res = await fetch('/api/admin/sets', {
+    const res = await fetch(`${import.meta.env.BASE_URL}api/admin/sets`, {
       method: 'POST',
       credentials: 'same-origin',
       body: form,

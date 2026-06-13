@@ -14,7 +14,7 @@ const FALLBACK_SETS: PieceSetInfo[] = [
 
 export async function listSets(): Promise<PieceSetInfo[]> {
   try {
-    const r = await fetch('/sets/index.json');
+    const r = await fetch(`${import.meta.env.BASE_URL}sets/index.json`);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = (await r.json()) as { sets: PieceSetInfo[] };
     if (Array.isArray(data.sets) && data.sets.length > 0) return data.sets;
@@ -28,7 +28,9 @@ export async function listSets(): Promise<PieceSetInfo[]> {
 export async function loadSet(info: PieceSetInfo): Promise<PieceSet> {
   if (info.builtin || info.id === 'clasico' || (!info.dir && !info.base)) return classicSet();
 
-  const base = info.base ?? `/sets/${info.dir}`;
+  const baseUrl = import.meta.env.BASE_URL;
+  const rawBase = info.base ?? `/sets/${info.dir}`;
+  const base = rawBase.startsWith('/') ? `${baseUrl.replace(/\/$/, '')}${rawBase}` : rawBase;
   const res = await fetch(`${base}/set.json`);
   if (!res.ok) throw new Error(`set.json de "${info.id}": HTTP ${res.status}`);
   const manifest = (await res.json()) as SetManifest;

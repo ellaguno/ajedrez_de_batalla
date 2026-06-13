@@ -127,7 +127,9 @@ export class AuthUI {
       : '—';
     $<HTMLButtonElement>('btn-games').hidden = !user;
     $<HTMLButtonElement>('btn-online').hidden = !user;
-    $<HTMLAnchorElement>('btn-admin').hidden = !user?.admin;
+    const adminLink = $<HTMLAnchorElement>('btn-admin');
+    adminLink.href = `${import.meta.env.BASE_URL}admin.html`;
+    adminLink.hidden = !user?.admin;
     this.onChange(user);
   }
 }

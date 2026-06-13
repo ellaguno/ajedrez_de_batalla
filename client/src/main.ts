@@ -33,6 +33,8 @@ interface ReplayState {
   index: number;
   busy: boolean;
   name: string;
+  /** Posición de partida del PGN: estándar, o el [FEN] de estudios/finales. */
+  startFen: string;
 }
 let replay: ReplayState | null = null;
 
@@ -297,7 +299,17 @@ function enterReplay(game: { name: string; pgn: string }): void {
   }
   controller.halt();
   hud.hideBanner();
-  replay = { chess: new Chess(), moves: full.history({ verbose: true }), index: 0, busy: false, name: game.name };
+  // Las partidas de estudio/finales empiezan desde un [FEN]; las normales, desde
+  // la posición inicial estándar. El reproductor debe arrancar en esa posición.
+  const startFen = full.getHeaders().FEN ?? new Chess().fen();
+  replay = {
+    chess: new Chess(startFen),
+    startFen,
+    moves: full.history({ verbose: true }),
+    index: 0,
+    busy: false,
+    name: game.name,
+  };
   rpBar.hidden = false;
   syncBoard();
   updateReplayUi();
@@ -344,7 +356,7 @@ function replayPrev(): void {
 
 function replayStart(): void {
   if (!replay || replay.busy) return;
-  replay.chess.reset();
+  replay.chess.load(replay.startFen);
   replay.index = 0;
   syncBoard();
   updateReplayUi();

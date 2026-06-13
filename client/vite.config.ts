@@ -19,6 +19,7 @@ const apiProxy = {
 };
 
 export default defineConfig({
+  base: process.env.VITE_BASE ?? '/',
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   build: {
     target: 'es2022',

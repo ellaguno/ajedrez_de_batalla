@@ -48,7 +48,7 @@ export class OnlineClient {
   private async connect(): Promise<void> {
     if (this.connected) return;
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const ws = new WebSocket(`${proto}://${location.host}/api/ws`);
+    const ws = new WebSocket(`${proto}://${location.host}${import.meta.env.BASE_URL}api/ws`);
     this.ws = ws;
     await new Promise<void>((resolve, reject) => {
       ws.addEventListener('open', () => resolve(), { once: true });

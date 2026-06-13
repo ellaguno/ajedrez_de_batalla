@@ -1,3 +1,4 @@
+import './env.js'; // primero: carga .env antes de que otros módulos lean process.env
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';

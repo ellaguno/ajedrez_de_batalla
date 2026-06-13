@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test:smoke": "node tests/run-smoke.mjs",
     "generate:set": "node scripts/generate-set.mjs",
+    "export:classic": "tsx scripts/export-classic.mts",
     "postinstall": "node scripts/copy-engine.mjs"
   },
   "dependencies": {
@@ -21,6 +22,7 @@
     "@types/three": "^0.165.0",
     "adm-zip": "^0.5.17",
     "playwright-core": "^1.45.0",
+    "tsx": "^4.15.0",
     "typescript": "^5.4.0",
     "vite": "^5.2.0"
   }

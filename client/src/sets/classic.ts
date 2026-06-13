@@ -153,7 +153,7 @@ function buildKnight(mat: THREE.Material): THREE.Group {
   return g;
 }
 
-function buildPiece(type: PieceType, color: Color): THREE.Group {
+export function buildPiece(type: PieceType, color: Color): THREE.Group {
   const mat = color === 'w' ? WHITE_MAT : BLACK_MAT;
   const group = new THREE.Group();
 

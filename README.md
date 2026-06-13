@@ -43,6 +43,11 @@ npm run test:smoke --workspace=client
 
 ### Variables de entorno del servidor
 
+Pueden definirse en el entorno o en un archivo **`.env`** en la raíz del repo
+(o en `server/`) — copiar `.env.example` a `.env` y ajustar. El servidor lo lee
+al arrancar; las variables del entorno real tienen prioridad, y `.env` está en
+`.gitignore` (ahí van las claves API sin riesgo de subirlas).
+
 | Variable | Uso |
 |---|---|
 | `PORT`, `HOST` | Puerto/host de escucha (8731 / 127.0.0.1) |
@@ -141,6 +146,10 @@ El set de referencia "Guerreros Geométricos" se genera con
 con espada, ligado rígido por vértice). Cualquier set externo entra igual:
 exportar GLB con esqueleto + clips desde Blender/Mixamo/Meshy y escribir su
 `set.json`.
+
+El set "Clásico" es procedural (sin GLBs); para editarlo en Blender,
+`npm run export:classic --workspace=client` lo exporta a GLBs + `set.json` y
+deja un ZIP listo para subir desde `/admin.html` (detalles en el manual).
 
 Para instalar un set sin tocar el repositorio: empaquetar `set.json` + los
 `.glb` en un ZIP (sin subcarpetas) y subirlo desde la página de administración

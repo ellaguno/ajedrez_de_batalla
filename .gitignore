@@ -2,6 +2,8 @@ node_modules/
 dist/
 # Generado por client/scripts/copy-engine.mjs en postinstall
 client/public/engine/
+# Salida de scripts de exportación (npm run export:classic)
+client/scripts/export/
 # Base de datos local del servidor
 server/data/
 *.sqlite
@@ -9,3 +11,5 @@ server/data/
 *.sqlite-shm
 *.log
 .DS_Store
+# Configuración local con secretos (ver .env.example)
+.env

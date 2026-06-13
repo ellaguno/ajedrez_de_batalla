@@ -114,6 +114,27 @@ Puedes mezclar: unas piezas con `model` y otras con `modelW`/`modelB`.
 > `client/scripts/generate-set.mjs`). Si solo quieres ajustar proporciones o
 > animaciones de ese set, suele ser más cómodo tocar el script que Blender.
 
+### Editar el set "Clásico" en Blender
+
+El set "Clásico (sin animación)" no tiene archivos GLB: sus piezas Staunton se
+generan por código al cargar el juego (`client/src/sets/classic.ts`, perfiles
+de revolución + detalles). Hay dos maneras de editarlo:
+
+- **Por código**: ajustar los perfiles `[radio, altura]` y las formas en
+  `classic.ts` (cómodo para proporciones y grosores).
+- **En Blender**: exportarlo primero a GLBs con
+
+  ```bash
+  npm run export:classic --workspace=client
+  ```
+
+  Eso crea `client/scripts/export/clasico-editable/` (6 GLBs + `set.json`) y
+  un `clasico-editable.zip` listo para subir tal cual desde `/admin.html`.
+  Importa los GLB en Blender (`File > Import > glTF 2.0`), esculpe a gusto,
+  re-exporta con el mismo nombre y vuelve a comprimir el ZIP (archivos en la
+  raíz, sin subcarpeta). Estos GLB no llevan esqueleto ni animaciones: el
+  juego usa sus movimientos de reserva, igual que con el Clásico integrado.
+
 ## Crear un set desde cero
 
 ### Opción A: modelar y animar en Blender

@@ -177,11 +177,14 @@ export const admin = {
   async libraryUpload(file: File, category: LibraryCategory): Promise<{ ok: boolean; added: number }> {
     const form = new FormData();
     form.append('archivo', file);
-    const res = await fetch(`/api/admin/library?category=${encodeURIComponent(category)}`, {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: form,
-    });
+    const res = await fetch(
+      `${import.meta.env.BASE_URL}api/admin/library?category=${encodeURIComponent(category)}`,
+      {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: form,
+      },
+    );
     const data = (await res.json().catch(() => null)) as
       | { ok: boolean; added: number; error?: string }
       | null;

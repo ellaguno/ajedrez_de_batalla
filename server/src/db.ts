@@ -73,8 +73,27 @@ CREATE TABLE IF NOT EXISTS matches (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS library_games (
+  id INTEGER PRIMARY KEY,
+  category TEXT NOT NULL,
+  name TEXT NOT NULL,
+  white TEXT,
+  black TEXT,
+  event TEXT,
+  date TEXT,
+  eco TEXT,
+  result TEXT NOT NULL DEFAULT '*',
+  moves INTEGER NOT NULL DEFAULT 0,
+  description TEXT,
+  pgn TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'admin',
+  builtin INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_games_user ON games(user_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_library_cat ON library_games(category, name);
 `);
 
 // Migración: columna de administrador en instalaciones previas.
@@ -124,4 +143,22 @@ export interface GameRow {
   moves: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface LibraryRow {
+  id: number;
+  category: string;
+  name: string;
+  white: string | null;
+  black: string | null;
+  event: string | null;
+  date: string | null;
+  eco: string | null;
+  result: string;
+  moves: number;
+  description: string | null;
+  pgn: string;
+  source: string;
+  builtin: number;
+  created_at: string;
 }

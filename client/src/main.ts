@@ -9,6 +9,7 @@ import type { HighlightKind } from './scene/board';
 import { Hud } from './ui/hud';
 import { AuthUI } from './ui/auth';
 import { GamesUI } from './ui/games';
+import { LibraryUI } from './ui/library';
 import * as storage from './storage';
 import * as api from './api';
 import { OnlineClient, onlineErrorText, type StartInfo } from './online';
@@ -286,7 +287,7 @@ function applyTheme(theme: storage.Theme): void {
 const rpBar = document.getElementById('replay-bar') as HTMLDivElement;
 const rpPos = document.getElementById('rp-pos') as HTMLSpanElement;
 
-function enterReplay(game: api.GameFull): void {
+function enterReplay(game: { name: string; pgn: string }): void {
   const full = new Chess();
   try {
     full.loadPgn(game.pgn);
@@ -502,6 +503,13 @@ new GamesUI({
     void controller.newGame(game.config, game.pgn);
   },
   onReplay(game) {
+    enterReplay(game);
+  },
+});
+
+new LibraryUI({
+  onReplay(game) {
+    exitReplay();
     enterReplay(game);
   },
 });

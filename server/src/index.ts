@@ -34,6 +34,7 @@ import { gameRoutes } from './games.js';
 import { adminRoutes } from './admin.js';
 import { llmRoutes, seedLlmModels } from './llm.js';
 import { onlineRoutes } from './online.js';
+import { libraryRoutes, seedLibrary } from './library.js';
 import { devMails } from './mailer.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -49,6 +50,8 @@ seedLlmModels();
 llmRoutes(app);
 await onlineRoutes(app);
 await adminRoutes(app);
+seedLibrary();
+libraryRoutes(app);
 
 // Endpoints solo-desarrollo (los usan las pruebas para leer el correo simulado).
 if (process.env.ADB_DEV === '1') {

@@ -66,6 +66,33 @@ Los modelos se siembran en la tabla `llm_models` al arrancar el servidor
 (el panel de administración del hito 7 permitirá gestionarlos sin variables
 de entorno).
 
+### Biblioteca de partidas
+
+El botón **Biblioteca** (siempre visible, sin necesidad de cuenta) abre un
+catálogo de partidas reproducibles con las mismas cinemáticas que el juego:
+partidas **famosas** (La Inmortal, La Siempreviva, la partida de la Ópera…),
+**educativas** (mate del pastor, mate del loco, mate ahogado de Philidor…),
+**finales** (estudios de Saavedra y Réti, rey y dama contra rey) y **trampas de
+apertura** (Légal, Budapest, Blackburne). Tiene pestañas por categoría y buscador.
+
+La biblioteca se alimenta de tres fuentes, todas en la tabla `library_games`:
+
+- **Builtin** — los `.pgn` versionados en `server/library/builtin/` se siembran
+  al arrancar (idempotente: editarlos actualiza el contenido). Cada partida lleva
+  tags propios `[ADBTitle]`, `[ADBCategory]` y `[ADBDescription]`.
+- **Admin** — desde el panel `/admin.html` se suben archivos `.pgn` (una o varias
+  partidas; las inválidas se descartan) eligiendo categoría.
+- **Colecciones grandes** — descarga cientos de partidas por jugador desde
+  pgnmentor.com (jugadas de ajedrez = libre distribución):
+
+  ```bash
+  npm run library:fetch --workspace=server                 # clásicos por defecto
+  npm run library:fetch --workspace=server -- Kasparov Tal  # jugadores concretos
+  ```
+
+  Cada jugador se importa con fuente `pgnmentor:<Jugador>`; re-ejecutar reemplaza
+  esa colección. Las partidas builtin nunca se borran desde el panel ni el script.
+
 ## Hoja de ruta
 
 - [x] **Hito 1 — Núcleo jugable**: ajedrez legal completo, tablero 3D con piezas

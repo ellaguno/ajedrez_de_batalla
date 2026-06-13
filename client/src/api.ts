@@ -174,6 +174,21 @@ export const admin = {
     }
     return data!;
   },
+  async libraryUpload(file: File, category: LibraryCategory): Promise<{ ok: boolean; added: number }> {
+    const form = new FormData();
+    form.append('archivo', file);
+    const res = await fetch(`/api/admin/library?category=${encodeURIComponent(category)}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: form,
+    });
+    const data = (await res.json().catch(() => null)) as
+      | { ok: boolean; added: number; error?: string }
+      | null;
+    if (!res.ok) throw new ApiError(res.status, data?.error ?? `http-${res.status}`);
+    return data!;
+  },
+  libraryRemove: (id: number) => call<{ ok: boolean }>('DELETE', `/admin/library/${id}`),
 };
 
 export const games = {
@@ -183,4 +198,61 @@ export const games = {
     call<{ ok: boolean }>('PUT', `/games/${id}`, payload),
   get: (id: number) => call<GameFull>('GET', `/games/${id}`),
   remove: (id: number) => call<{ ok: boolean }>('DELETE', `/games/${id}`),
+};
+
+// --------------------------------------------------------------- biblioteca
+export type LibraryCategory = 'famous' | 'educational' | 'endgame' | 'opening';
+
+export interface LibrarySummary {
+  id: number;
+  category: LibraryCategory;
+  name: string;
+  white: string | null;
+  black: string | null;
+  event: string | null;
+  date: string | null;
+  eco: string | null;
+  result: string;
+  moves: number;
+  description: string | null;
+  builtin: boolean;
+}
+
+export interface LibraryFull extends LibrarySummary {
+  pgn: string;
+}
+
+export interface LibraryPage {
+  items: LibrarySummary[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface LibraryCategories {
+  counts: Partial<Record<LibraryCategory, number>>;
+  total: number;
+}
+
+export interface LibraryQuery {
+  category?: LibraryCategory;
+  q?: string;
+  limit?: number;
+  offset?: number;
+  builtin?: 0 | 1;
+}
+
+export const library = {
+  categories: () => call<LibraryCategories>('GET', '/library/categories'),
+  list(query: LibraryQuery = {}): Promise<LibraryPage> {
+    const p = new URLSearchParams();
+    if (query.category) p.set('category', query.category);
+    if (query.q) p.set('q', query.q);
+    if (query.limit != null) p.set('limit', String(query.limit));
+    if (query.offset != null) p.set('offset', String(query.offset));
+    if (query.builtin != null) p.set('builtin', String(query.builtin));
+    const qs = p.toString();
+    return call<LibraryPage>('GET', `/library${qs ? `?${qs}` : ''}`);
+  },
+  get: (id: number) => call<LibraryFull>('GET', `/library/${id}`),
 };

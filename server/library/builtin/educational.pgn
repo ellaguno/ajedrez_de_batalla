@@ -1,0 +1,47 @@
+[Event "Lección"]
+[White "Blancas"]
+[Black "Negras"]
+[Result "1-0"]
+[ECO "C20"]
+[ADBCategory "educational"]
+[ADBTitle "Mate del pastor"]
+[ADBDescription "El mate en cuatro más conocido: la dama y el alfil cooperan para atacar el punto débil f7. Sirve para aprender a defender f7/f2."]
+
+1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7# 1-0
+
+[Event "Lección"]
+[White "Blancas"]
+[Black "Negras"]
+[Result "0-1"]
+[ECO "A00"]
+[ADBCategory "educational"]
+[ADBTitle "Mate del loco"]
+[ADBDescription "El mate más rápido posible (dos jugadas). Muestra el peligro de debilitar las casillas alrededor del rey."]
+
+1. f3 e5 2. g4 Qh4# 0-1
+
+[Event "Lección"]
+[White "Blancas"]
+[Black "Negras"]
+[Result "1-0"]
+[ECO "000"]
+[ADBCategory "educational"]
+[ADBTitle "Mate de la coz (Philidor)"]
+[ADBDescription "El mate ahogado de caballo: jaque doble, sacrificio de dama y el rey queda asfixiado por sus propias piezas. Patrón imprescindible."]
+[FEN "5rk1/6pp/8/4N3/8/1Q6/8/6K1 w - - 0 1"]
+[SetUp "1"]
+
+1. Qe6+ Kh8 2. Nf7+ Kg8 3. Nh6+ Kh8 4. Qg8+ Rxg8 5. Nf7# 1-0
+
+[Event "Lección"]
+[White "Blancas"]
+[Black "Negras"]
+[Result "1-0"]
+[ECO "000"]
+[ADBCategory "educational"]
+[ADBTitle "Mate con dos torres (en escalera)"]
+[ADBDescription "La técnica básica para dar mate con dos torres empujando al rey hasta la última fila: el mate en escalera."]
+[FEN "4k3/8/8/8/8/8/R7/1R2K3 w - - 0 1"]
+[SetUp "1"]
+
+1. Ra7 Kd8 2. Rb8# 1-0

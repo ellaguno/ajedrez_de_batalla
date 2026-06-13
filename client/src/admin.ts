@@ -198,13 +198,73 @@ $('hdri-upload').addEventListener('click', () => {
     .catch((e) => show(`No se pudo subir (${describe(e)})`, true));
 });
 
+// ------------------------------------------------------------- biblioteca
+async function refreshLibrary(): Promise<void> {
+  const [{ counts, total }, page] = await Promise.all([
+    api.library.categories(),
+    api.library.list({ builtin: 0, limit: 100 }),
+  ]);
+  $('library-counts').textContent =
+    `Total: ${total} · Famosas: ${counts.famous ?? 0} · Educativas: ${counts.educational ?? 0}` +
+    ` · Finales: ${counts.endgame ?? 0} · Aperturas: ${counts.opening ?? 0}`;
+
+  const list = $<HTMLUListElement>('library-admin-list');
+  if (page.items.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = 'No hay partidas subidas o descargadas (las builtin no se listan aquí).';
+    list.replaceChildren(li);
+    return;
+  }
+  list.replaceChildren(
+    ...page.items.map((g) => {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.textContent = `[${g.category}] ${g.name} · ${g.moves} jug`;
+      const del = document.createElement('button');
+      del.textContent = 'Borrar';
+      del.addEventListener('click', () => {
+        if (!window.confirm(`¿Borrar "${g.name}" de la biblioteca?`)) return;
+        void api.admin.libraryRemove(g.id).then(refreshLibrary);
+      });
+      li.append(span, del);
+      return li;
+    }),
+  );
+  if (page.total > page.items.length) {
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = `… y ${page.total - page.items.length} más (usa el borrado por fuente en el servidor).`;
+    list.append(li);
+  }
+}
+
+$('library-upload').addEventListener('click', () => {
+  const input = $<HTMLInputElement>('library-file');
+  const category = $<HTMLSelectElement>('library-category').value as
+    | 'famous'
+    | 'educational'
+    | 'endgame'
+    | 'opening';
+  const file = input.files?.[0];
+  if (!file) return show('Elige un archivo .pgn primero.', true);
+  void api.admin
+    .libraryUpload(file, category)
+    .then((r) => {
+      show(`${r.added} partida(s) añadida(s) a la biblioteca.`);
+      input.value = '';
+      return refreshLibrary();
+    })
+    .catch((e) => show(`No se pudo subir (${describe(e)})`, true));
+});
+
 // --------------------------------------------------------------- arranque
 void (async () => {
   try {
     const me = await api.auth.me();
     if (!me.user?.admin) throw new Error('no-admin');
     $('admin-main').hidden = false;
-    await Promise.all([refreshLlm(), refreshSets(), refreshHdris()]);
+    await Promise.all([refreshLlm(), refreshSets(), refreshHdris(), refreshLibrary()]);
   } catch {
     $('admin-denied').hidden = false;
   }

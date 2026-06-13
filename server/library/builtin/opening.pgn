@@ -1,0 +1,33 @@
+[Event "Lección de apertura"]
+[White "Blancas"]
+[Black "Negras"]
+[Result "1-0"]
+[ECO "C41"]
+[ADBCategory "opening"]
+[ADBTitle "La trampa de Légal"]
+[ADBDescription "El célebre 'mate de Légal': se sacrifica la dama para dar mate con dos piezas menores cuando las negras capturan con codicia."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 d6 4. Nc3 Bg4 5. Nxe5 Bxd1 6. Bxf7+ Ke7 7. Nd5# 1-0
+
+[Event "Lección de apertura"]
+[White "Blancas"]
+[Black "Negras"]
+[Result "0-1"]
+[ECO "A52"]
+[ADBCategory "opening"]
+[ADBTitle "Trampa del Gambito Budapest (Kieninger)"]
+[ADBDescription "Una de las trampas más conocidas: si las blancas se llevan el alfil con axb4, reciben un mate de caballo smothered en plena apertura."]
+
+1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. Bf4 Nc6 5. Nf3 Bb4+ 6. Nbd2 Qe7 7. a3 Ngxe5
+8. axb4 Nd3# 0-1
+
+[Event "Lección de apertura"]
+[White "Blancas"]
+[Black "Negras"]
+[Result "0-1"]
+[ECO "C45"]
+[ADBCategory "opening"]
+[ADBTitle "Trampa del 'mate del pastor del pobre' (Blackburne)"]
+[ADBDescription "El Blackburne Shilling Gambit: si las blancas pican con el caballo y la dama, caen en un mate relámpago. Un clásico de las trampas."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nd4 4. Nxe5 Qg5 5. Nxf7 Qxg2 6. Rf1 Qxe4+ 7. Be2 Nf3# 0-1

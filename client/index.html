@@ -16,6 +16,7 @@
         <div class="spacer"></div>
         <a id="btn-admin" href="/admin.html" hidden title="Administración">⚙️</a>
         <button id="btn-online" hidden>Jugar en línea</button>
+        <button id="btn-library">Biblioteca</button>
         <button id="btn-games" hidden>Mis partidas</button>
         <button id="btn-user">Entrar</button>
         <button id="btn-theme" title="Tema claro/oscuro">🌓</button>
@@ -166,6 +167,18 @@
         <ul id="games-list"><li class="empty">Cargando…</li></ul>
         <div class="dlg-buttons">
           <button id="games-close">Cerrar</button>
+        </div>
+      </dialog>
+
+      <dialog id="dlg-library" class="dlg-wide">
+        <h2>Biblioteca de partidas</h2>
+        <p class="dlg-hint">Partidas famosas, lecciones, finales y trampas de apertura. Elige una y se reproduce con cinemáticas.</p>
+        <div id="library-tabs" class="library-tabs"></div>
+        <input id="library-search" type="search" placeholder="Buscar por jugador, evento o nombre…" autocomplete="off" />
+        <ul id="library-list" class="games-list-ul"><li class="empty">Cargando…</li></ul>
+        <div class="dlg-buttons">
+          <button id="library-more" hidden>Cargar más</button>
+          <button id="library-close">Cerrar</button>
         </div>
       </dialog>
 

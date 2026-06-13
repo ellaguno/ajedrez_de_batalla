@@ -73,6 +73,28 @@
         <ul id="hdri-list"></ul>
       </section>
 
+      <section class="admin-section">
+        <h2>Biblioteca de partidas</h2>
+        <p class="muted">
+          Sube archivos <code>.pgn</code> (una o varias partidas) a la biblioteca pública. Las partidas
+          inválidas se descartan automáticamente. Las partidas <em>builtin</em> que vienen con la app no se
+          listan ni se borran aquí. Para colecciones grandes, usa el script
+          <code>npm run library:fetch</code> del servidor.
+        </p>
+        <p class="muted" id="library-counts">Cargando conteos…</p>
+        <div class="upload-row">
+          <select id="library-category">
+            <option value="famous">Famosas</option>
+            <option value="educational">Educativas</option>
+            <option value="endgame">Finales</option>
+            <option value="opening">Aperturas y trampas</option>
+          </select>
+          <input type="file" id="library-file" accept=".pgn" />
+          <button id="library-upload" class="primary">Subir PGN</button>
+        </div>
+        <ul id="library-admin-list"></ul>
+      </section>
+
       <div id="admin-msg" hidden></div>
     </main>
 
